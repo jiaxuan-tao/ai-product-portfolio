@@ -1,4 +1,4 @@
-# AI Emotion Companion｜AI 情感陪伴产品
+# Project Name｜项目名称
 
 ## Project Overview｜项目概览
 
@@ -9,6 +9,10 @@
 待补充。
 
 ## Core Features｜核心功能
+
+待补充。
+
+## AI Capability｜AI 能力
 
 待补充。
 
