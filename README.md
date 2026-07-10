@@ -10,8 +10,8 @@
 
 ## Projects
 
-- Vibe Coding Prompt Library
-  A lightweight local-first prompt library for organizing reusable Vibe Coding prompts and Codex instructions.
+- Vibe Coding 提示词资料库
+  面向 Vibe Coding 工作流的本地化提示词管理工具，用于整理和复用 PRD、Codex 指令、UI 修改、Debug 和项目文档提示词。
 
 ---
 
@@ -33,7 +33,7 @@
 - AI Product Thinking｜AI 产品思考
 - Vibe Coding Practice｜Vibe Coding 实践
 - Product Requirement Documents｜产品需求文档
-- User Flow Design｜用户流程设计
+- 用户流程设计
 - Prompt Design｜Prompt 设计
 - Product Iteration｜产品迭代记录
 

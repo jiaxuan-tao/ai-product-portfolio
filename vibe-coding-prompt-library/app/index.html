@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Vibe Coding Prompt Library</title>
+  <title>Vibe Coding 提示词资料库</title>
   <style>
     :root {
       --bg: #f6f8fa;
@@ -451,13 +451,14 @@
     <header class="topbar">
       <div class="topbar-inner">
         <div>
-          <p class="kicker">Local-first prompt workspace</p>
-          <h1>Vibe Coding Prompt Library</h1>
-          <p class="subtitle">A local-first prompt library for reusable Vibe Coding workflows.</p>
-          <p class="repo-note">整理常用 Vibe Coding 提示词，让 PRD、Codex 指令、UI 修改、Debug 和项目文档可以被持续复用。</p>
+          <p class="kicker">local-first 提示词工作区</p>
+          <h1>Vibe Coding 提示词资料库</h1>
+          <p class="subtitle">面向 Vibe Coding 工作流的本地化提示词管理工具，用于整理和复用 PRD、Codex 指令、UI 修改、Debug 和项目文档提示词。</p>
+          <p class="repo-note">内置常用模板，支持分类筛选、搜索、复制和本地保存。</p>
         </div>
-        <div class="status-strip" aria-label="Project attributes">
-          <span class="status-pill">Single HTML</span>
+        <div class="status-strip" aria-label="项目技术特征">
+          <span class="status-pill">单文件 HTML</span>
+          <span class="status-pill">local-first</span>
           <span class="status-pill">Vanilla JS</span>
           <span class="status-pill">localStorage</span>
           <span class="status-pill">No API</span>
@@ -468,30 +469,30 @@
     <main class="workspace">
       <aside class="panel">
         <div class="panel-header">
-          <p class="panel-title">Categories</p>
+          <p class="panel-title">分类</p>
           <span class="count" id="totalCount">0</span>
         </div>
         <div class="panel-body">
-          <nav class="category-list" id="categoryList" aria-label="Prompt categories"></nav>
+          <nav class="category-list" id="categoryList" aria-label="提示词分类"></nav>
           <div class="library-actions">
-            <button class="button" id="newPromptButton" type="button">New prompt</button>
-            <button class="button danger" id="resetButton" type="button">Reset defaults</button>
+            <button class="button" id="newPromptButton" type="button">新建提示词</button>
+            <button class="button danger" id="resetButton" type="button">恢复默认模板</button>
           </div>
         </div>
         <div class="reference">
-          Lightweight remix based on <a href="https://github.com/sevenreasons/promptcat" target="_blank" rel="noreferrer">promptcat</a>.
+          基于开源项目 <a href="https://github.com/sevenreasons/promptcat" target="_blank" rel="noreferrer">promptcat</a> 的轻量改造版本。
         </div>
       </aside>
 
       <section class="panel">
         <div class="panel-header">
-          <p class="panel-title">Prompt Library</p>
+          <p class="panel-title">提示词资料库</p>
           <span class="toast" id="listStatus"></span>
         </div>
         <div class="panel-body">
           <div class="search-row">
-            <input class="input" id="searchInput" type="search" placeholder="Search prompts" aria-label="Search prompts">
-            <button class="button" id="clearSearchButton" type="button">Clear</button>
+            <input class="input" id="searchInput" type="search" placeholder="搜索提示词" aria-label="搜索提示词">
+            <button class="button" id="clearSearchButton" type="button">清空</button>
           </div>
           <div class="prompt-list" id="promptList" aria-live="polite" style="margin-top: 14px;"></div>
         </div>
@@ -499,38 +500,38 @@
 
       <section class="panel editor-panel">
         <div class="panel-header">
-          <p class="panel-title">Prompt Detail</p>
+          <p class="panel-title">提示词详情</p>
           <span class="toast" id="editorStatus"></span>
         </div>
         <div class="panel-body">
           <form class="editor-form" id="promptForm">
             <div class="field">
-              <label for="titleInput">Title</label>
+              <label for="titleInput">标题</label>
               <input class="input" id="titleInput" name="title" required>
             </div>
             <div class="field">
-              <label for="categoryInput">Category</label>
+              <label for="categoryInput">分类</label>
               <select class="select" id="categoryInput" name="category"></select>
             </div>
             <div class="field">
-              <label for="descriptionInput">Short description</label>
+              <label for="descriptionInput">简要说明</label>
               <input class="input" id="descriptionInput" name="description">
             </div>
             <div class="field">
-              <label for="bodyInput">Prompt body</label>
+              <label for="bodyInput">提示词正文</label>
               <textarea class="textarea" id="bodyInput" name="body" required></textarea>
               <div class="body-footer">
-                <span id="bodyCount">0 chars</span>
-                <span id="savedState">Not saved</span>
+                <span id="bodyCount">0 字</span>
+                <span id="savedState">未保存</span>
               </div>
             </div>
             <div class="editor-actions">
               <div class="button-group">
-                <button class="button primary" type="submit">Save prompt</button>
-                <button class="button" id="copyButton" type="button">Copy body</button>
-                <button class="button" id="duplicateButton" type="button">Duplicate</button>
+                <button class="button primary" type="submit">保存提示词</button>
+                <button class="button" id="copyButton" type="button">复制内容</button>
+                <button class="button" id="duplicateButton" type="button">创建副本</button>
               </div>
-              <button class="button danger" id="deleteButton" type="button">Delete</button>
+              <button class="button danger" id="deleteButton" type="button">删除</button>
             </div>
           </form>
         </div>
@@ -539,25 +540,37 @@
   </div>
 
   <script>
-    // This project keeps promptcat's single-file, local-first spirit and narrows it to Vibe Coding templates.
+    // 保留 promptcat 的单文件、本地优先思路，并聚焦 Vibe Coding 提示词模板。
     const STORAGE_KEY = "vibe-coding-prompt-library:v0.1.0";
+    const LOCALIZATION_KEY = "vibe-coding-prompt-library:zh-CN-v0.1.1";
+    const ALL_CATEGORY = "全部";
+    const LEGACY_CATEGORY_MAP = {
+      "PRD Prompts": "PRD 提示词",
+      "Codex Instructions": "Codex 开发指令",
+      "UI Refinement": "UI 优化",
+      "Debug & Fix": "问题修复",
+      "README Writing": "README 编写",
+      "Changelog Writing": "Changelog 记录",
+      "User Flow": "用户流程",
+      "Product Structure": "产品结构"
+    };
     const DEFAULT_CATEGORIES = [
-      "PRD Prompts",
-      "Codex Instructions",
-      "UI Refinement",
-      "Debug & Fix",
-      "README Writing",
-      "Changelog Writing",
-      "User Flow",
-      "Product Structure"
+      "PRD 提示词",
+      "Codex 开发指令",
+      "UI 优化",
+      "问题修复",
+      "README 编写",
+      "Changelog 记录",
+      "用户流程",
+      "产品结构"
     ];
 
     const DEFAULT_PROMPTS = [
       {
         id: "prd-draft-prompt",
-        title: "PRD Draft Prompt",
-        category: "PRD Prompts",
-        description: "Turn a raw product idea into a lightweight PRD for a Vibe Coding project.",
+        title: "PRD 初稿生成提示词",
+        category: "PRD 提示词",
+        description: "将初始产品想法整理为适合轻量 Vibe Coding 项目推进的 PRD。",
         body: `请基于以下产品想法，整理一份轻量 PRD。
 
 要求：
@@ -565,14 +578,14 @@
 1. 不要写成商业包装或宣传文案。
 2. 重点说明产品定位、目标用户、核心场景、MVP 功能、非目标范围和后续迭代方向。
 3. 输出结构包括：
-    * Background｜背景
-    * User Scenario｜用户场景
-    * Product Goal｜产品目标
-    * MVP Scope｜最小功能范围
-    * User Flow｜核心用户流程
-    * AI Capability｜AI 能力
-    * Non-goals｜暂不做什么
-    * Next Iteration｜后续迭代
+    * 背景
+    * 用户场景
+    * 产品目标
+    * 最小功能范围
+    * 核心用户流程
+    * AI 能力
+    * 暂不做什么
+    * 后续迭代
 
 产品想法：
 [在这里粘贴产品想法]`,
@@ -580,9 +593,9 @@
       },
       {
         id: "codex-build-instruction",
-        title: "Codex Build Instruction",
-        category: "Codex Instructions",
-        description: "Give Codex scoped build instructions without expanding the project unnecessarily.",
+        title: "Codex 开发执行指令",
+        category: "Codex 开发指令",
+        description: "为 Codex 提供清晰的开发范围、目标和限制，避免不必要地扩大项目范围。",
         body: `请基于以下需求修改当前项目代码。
 
 要求：
@@ -592,7 +605,7 @@
 3. 优先做最小可用版本，不要扩大功能范围。
 4. 修改完成后检查页面是否可以正常运行。
 5. 如果涉及文案和 UI，请保持简洁、清晰、轻量。
-6. 完成后只总结修改内容，不要 commit，不要 push。
+6. 完成后只总结修改内容，不要提交，不要推送。
 
 项目目标：
 [填写项目目标]
@@ -606,9 +619,9 @@
       },
       {
         id: "ui-refinement-prompt",
-        title: "UI Refinement Prompt",
-        category: "UI Refinement",
-        description: "Improve UI hierarchy and consistency while keeping existing behavior stable.",
+        title: "UI 优化提示词",
+        category: "UI 优化",
+        description: "在保持现有行为稳定的前提下，优化页面层级和视觉一致性。",
         body: `请优化当前页面 UI，但不要重构功能逻辑。
 
 优化方向：
@@ -629,9 +642,9 @@
       },
       {
         id: "bug-fix-prompt",
-        title: "Bug Fix Prompt",
-        category: "Debug & Fix",
-        description: "Guide a focused bug investigation and minimal fix.",
+        title: "问题排查与修复提示词",
+        category: "问题修复",
+        description: "引导围绕问题进行聚焦排查，并完成最小必要修复。",
         body: `请帮我修复当前项目中的问题。
 
 请按以下步骤处理：
@@ -641,7 +654,7 @@
 3. 做最小必要修改，不要顺手重构无关代码。
 4. 修复后说明修改了哪些文件。
 5. 检查是否引入新的问题。
-6. 完成后只总结修改内容，不要 commit，不要 push。
+6. 完成后只总结修改内容，不要提交，不要推送。
 
 问题描述：
 [填写问题现象]
@@ -655,9 +668,9 @@
       },
       {
         id: "readme-project-record-prompt",
-        title: "README Project Record Prompt",
-        category: "README Writing",
-        description: "Draft a public project README for a lightweight Vibe Coding project.",
+        title: "项目 README 编写提示词",
+        category: "README 编写",
+        description: "为轻量 Vibe Coding 项目整理适合公开展示的项目 README。",
         body: `请为这个 Vibe Coding 项目整理一份 GitHub README。
 
 要求：
@@ -675,7 +688,7 @@
     * 本次改造范围
     * 运行方式
     * 后续计划
-    * Reference
+    * 参考来源
 
 项目信息：
 [粘贴项目说明]`,
@@ -683,9 +696,9 @@
       },
       {
         id: "changelog-prompt",
-        title: "Changelog Prompt",
-        category: "Changelog Writing",
-        description: "Convert raw change notes into a concise changelog entry.",
+        title: "版本更新记录提示词",
+        category: "Changelog 记录",
+        description: "将原始改动记录整理为简洁清晰的版本更新说明。",
         body: `请根据以下改动记录，整理一份 changelog。
 
 要求：
@@ -710,9 +723,9 @@
       },
       {
         id: "user-flow-prompt",
-        title: "User Flow Prompt",
-        category: "User Flow",
-        description: "Document the core path from opening a tool to completing the main task.",
+        title: "用户流程整理提示词",
+        category: "用户流程",
+        description: "整理用户从打开工具到完成核心任务的关键路径。",
         body: `请为以下轻量产品整理用户流程。
 
 要求：
@@ -734,9 +747,9 @@
       },
       {
         id: "product-structure-prompt",
-        title: "Product Structure Prompt",
-        category: "Product Structure",
-        description: "Describe page modules, prompt data, and product structure for a lightweight project.",
+        title: "产品结构整理提示词",
+        category: "产品结构",
+        description: "说明轻量项目的页面模块、提示词数据和产品结构。",
         body: `请为以下项目整理产品结构说明。
 
 要求：
@@ -760,7 +773,7 @@
 
     const state = {
       prompts: [],
-      selectedCategory: "All",
+      selectedCategory: ALL_CATEGORY,
       selectedId: null,
       query: "",
       draftIsNew: false,
@@ -799,9 +812,27 @@
 
     function loadPrompts() {
       const stored = readStoredPrompts();
-      state.prompts = Array.isArray(stored) && stored.length ? stored : cloneDefaults();
+      const needsLocalization = shouldLocalizeStoredPrompts();
+      state.prompts = Array.isArray(stored) && stored.length
+        ? (needsLocalization ? localizeStoredPrompts(stored) : stored)
+        : cloneDefaults();
       savePrompts();
+      markLocalized();
       state.selectedId = state.prompts[0]?.id || null;
+    }
+
+    function localizeStoredPrompts(prompts) {
+      const now = new Date().toISOString();
+      return prompts.map((prompt) => {
+        const category = LEGACY_CATEGORY_MAP[prompt.category] || prompt.category;
+        const defaultPrompt = prompt.isDefault && DEFAULT_PROMPTS.find((item) => item.id === prompt.id);
+        if (!defaultPrompt) return { ...prompt, category };
+        return {
+          ...defaultPrompt,
+          createdAt: prompt.createdAt || now,
+          updatedAt: prompt.updatedAt || now
+        };
+      });
     }
 
     function readStoredPrompts() {
@@ -811,6 +842,22 @@
       } catch (error) {
         state.storageAvailable = false;
         return null;
+      }
+    }
+
+    function shouldLocalizeStoredPrompts() {
+      try {
+        return localStorage.getItem(LOCALIZATION_KEY) !== "true";
+      } catch (error) {
+        return false;
+      }
+    }
+
+    function markLocalized() {
+      try {
+        localStorage.setItem(LOCALIZATION_KEY, "true");
+      } catch (error) {
+        // 直接打开 HTML 且浏览器禁止本地存储时，继续以当前页面状态运行。
       }
     }
 
@@ -830,13 +877,13 @@
         .map((prompt) => prompt.category)
         .filter(Boolean)
         .filter((category) => !DEFAULT_CATEGORIES.includes(category));
-      return ["All", ...DEFAULT_CATEGORIES, ...Array.from(new Set(extra)).sort()];
+      return [ALL_CATEGORY, ...DEFAULT_CATEGORIES, ...Array.from(new Set(extra)).sort()];
     }
 
     function getFilteredPrompts() {
       const query = state.query.trim().toLowerCase();
       return state.prompts.filter((prompt) => {
-        const matchesCategory = state.selectedCategory === "All" || prompt.category === state.selectedCategory;
+        const matchesCategory = state.selectedCategory === ALL_CATEGORY || prompt.category === state.selectedCategory;
         const haystack = [prompt.title, prompt.category, prompt.description, prompt.body].join(" ").toLowerCase();
         const matchesQuery = !query || haystack.includes(query);
         return matchesCategory && matchesQuery;
@@ -850,7 +897,7 @@
         `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`
       )).join("");
       nodes.categoryList.innerHTML = categories.map((category) => {
-        const count = category === "All"
+        const count = category === ALL_CATEGORY
           ? state.prompts.length
           : state.prompts.filter((prompt) => prompt.category === category).length;
         const isActive = category === state.selectedCategory ? " active" : "";
@@ -863,21 +910,21 @@
 
     function renderList() {
       const prompts = getFilteredPrompts();
-      nodes.listStatus.textContent = `${prompts.length} shown`;
+      nodes.listStatus.textContent = `显示 ${prompts.length} 个`;
       if (!prompts.length) {
-        nodes.promptList.innerHTML = `<p class="empty-state">No matching prompts.</p>`;
+        nodes.promptList.innerHTML = `<p class="empty-state">没有匹配的提示词。</p>`;
         return;
       }
       nodes.promptList.innerHTML = prompts.map((prompt) => {
         const isActive = prompt.id === state.selectedId ? " active" : "";
-        const sourceTag = prompt.isDefault ? `<span class="tag default">Default</span>` : `<span class="tag">Saved</span>`;
+        const sourceTag = prompt.isDefault ? `<span class="tag default">默认</span>` : `<span class="tag">已保存</span>`;
         return `<button class="prompt-card${isActive}" type="button" data-id="${escapeHtml(prompt.id)}">
           <h2>${escapeHtml(prompt.title)}</h2>
           <div class="prompt-meta">
             <span class="tag">${escapeHtml(prompt.category)}</span>
             ${sourceTag}
           </div>
-          <p>${escapeHtml(prompt.description || "No description")}</p>
+          <p>${escapeHtml(prompt.description || "暂无说明")}</p>
         </button>`;
       }).join("");
     }
@@ -889,7 +936,7 @@
       nodes.categoryInput.value = DEFAULT_CATEGORIES.includes(draft.category) ? draft.category : DEFAULT_CATEGORIES[0];
       nodes.descriptionInput.value = draft.description || "";
       nodes.bodyInput.value = draft.body || "";
-      nodes.savedState.textContent = prompt ? `Saved ${formatDate(prompt.updatedAt)}` : "New prompt";
+      nodes.savedState.textContent = prompt ? `已保存 ${formatDate(prompt.updatedAt)}` : "新建提示词";
       nodes.deleteButton.disabled = !prompt || prompt.isDefault;
       updateBodyCount();
     }
@@ -929,14 +976,14 @@
     function duplicatePrompt() {
       const source = state.prompts.find((item) => item.id === state.selectedId);
       if (!source) {
-        showEditorStatus("Select a prompt first.", "error");
+        showEditorStatus("请先选择一个提示词。", "error");
         return;
       }
       const now = new Date().toISOString();
       const copy = {
         ...source,
         id: createId(source.title),
-        title: `${source.title} Copy`,
+        title: `${source.title} 副本`,
         isDefault: false,
         createdAt: now,
         updatedAt: now
@@ -944,7 +991,7 @@
       state.prompts.unshift(copy);
       state.selectedId = copy.id;
       const saved = savePrompts();
-      showEditorStatus(saved ? "Duplicated locally." : "Duplicated in this tab.", "success");
+      showEditorStatus(saved ? "已在本地创建副本。" : "已在当前页面创建副本。", "success");
       renderAll();
     }
 
@@ -955,7 +1002,7 @@
       const description = nodes.descriptionInput.value.trim();
       const body = nodes.bodyInput.value.trim();
       if (!title || !body) {
-        showEditorStatus("Title and body are required.", "error");
+        showEditorStatus("请填写标题和提示词正文。", "error");
         return;
       }
       const now = new Date().toISOString();
@@ -984,26 +1031,26 @@
         state.selectedId = prompt.id;
       }
       const saved = savePrompts();
-      showEditorStatus(saved ? "Saved locally." : "Saved in this tab. Browser storage is unavailable.", "success");
+      showEditorStatus(saved ? "已保存到本地。" : "已保存到当前页面，浏览器本地存储不可用。", "success");
       renderAll();
     }
 
     function deleteCurrentPrompt() {
       const prompt = state.prompts.find((item) => item.id === state.selectedId);
       if (!prompt || prompt.isDefault) return;
-      const confirmed = window.confirm(`Delete "${prompt.title}"?`);
+      const confirmed = window.confirm(`确定删除“${prompt.title}”吗？`);
       if (!confirmed) return;
       state.prompts = state.prompts.filter((item) => item.id !== prompt.id);
       state.selectedId = state.prompts[0]?.id || null;
       const saved = savePrompts();
-      showEditorStatus(saved ? "Deleted locally." : "Deleted in this tab.", "success");
+      showEditorStatus(saved ? "已从本地删除。" : "已从当前页面删除。", "success");
       renderAll();
     }
 
     async function copyBody() {
       const text = nodes.bodyInput.value;
       if (!text.trim()) {
-        showEditorStatus("Prompt body is empty.", "error");
+        showEditorStatus("提示词正文为空。", "error");
         return;
       }
       try {
@@ -1012,10 +1059,10 @@
         } else {
           fallbackCopy(text);
         }
-        showEditorStatus("Copied.", "success");
+        showEditorStatus("已复制内容。", "success");
       } catch (error) {
         fallbackCopy(text);
-        showEditorStatus("Copied.", "success");
+        showEditorStatus("已复制内容。", "success");
       }
     }
 
@@ -1032,20 +1079,20 @@
     }
 
     function resetDefaults() {
-      const confirmed = window.confirm("Reset the library to the 8 default templates?");
+      const confirmed = window.confirm("确定恢复为 8 个默认模板吗？");
       if (!confirmed) return;
       state.prompts = cloneDefaults();
-      state.selectedCategory = "All";
+      state.selectedCategory = ALL_CATEGORY;
       state.selectedId = state.prompts[0]?.id || null;
       state.query = "";
       nodes.searchInput.value = "";
       const saved = savePrompts();
-      showEditorStatus(saved ? "Defaults restored." : "Defaults restored in this tab.", "success");
+      showEditorStatus(saved ? "已恢复默认模板。" : "已在当前页面恢复默认模板。", "success");
       renderAll();
     }
 
     function updateBodyCount() {
-      nodes.bodyCount.textContent = `${nodes.bodyInput.value.length} chars`;
+      nodes.bodyCount.textContent = `${nodes.bodyInput.value.length} 字`;
     }
 
     function createId(title) {
@@ -1058,10 +1105,10 @@
     }
 
     function formatDate(value) {
-      if (!value) return "locally";
+      if (!value) return "本地";
       const date = new Date(value);
-      if (Number.isNaN(date.getTime())) return "locally";
-      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      if (Number.isNaN(date.getTime())) return "本地";
+      return date.toLocaleDateString("zh-CN", { month: "numeric", day: "numeric" });
     }
 
     function escapeHtml(value) {
@@ -1118,16 +1165,16 @@
     nodes.deleteButton.addEventListener("click", deleteCurrentPrompt);
     nodes.bodyInput.addEventListener("input", () => {
       updateBodyCount();
-      nodes.savedState.textContent = "Unsaved changes";
+      nodes.savedState.textContent = "有未保存的修改";
     });
     nodes.titleInput.addEventListener("input", () => {
-      nodes.savedState.textContent = "Unsaved changes";
+      nodes.savedState.textContent = "有未保存的修改";
     });
     nodes.descriptionInput.addEventListener("input", () => {
-      nodes.savedState.textContent = "Unsaved changes";
+      nodes.savedState.textContent = "有未保存的修改";
     });
     nodes.categoryInput.addEventListener("change", () => {
-      nodes.savedState.textContent = "Unsaved changes";
+      nodes.savedState.textContent = "有未保存的修改";
     });
 
     loadPrompts();

@@ -1,11 +1,11 @@
-# Prompts｜Vibe Coding Prompt Library
+# 提示词模板｜Vibe Coding 提示词资料库
 
-This document records the 8 default prompt templates built into the local app.
+本文档记录本地应用内置的 8 个默认提示词模板。
 
-## PRD Draft Prompt
+## PRD 初稿生成提示词
 
-- Category｜分类：PRD Prompts
-- Use Case｜适用场景：把一个初始产品想法整理成适合轻量项目推进的 PRD。
+- 分类：PRD 提示词
+- 适用场景：把一个初始产品想法整理成适合轻量项目推进的 PRD。
 
 ```text
 请基于以下产品想法，整理一份轻量 PRD。
@@ -15,23 +15,23 @@ This document records the 8 default prompt templates built into the local app.
 1. 不要写成商业包装或宣传文案。
 2. 重点说明产品定位、目标用户、核心场景、MVP 功能、非目标范围和后续迭代方向。
 3. 输出结构包括：
-    * Background｜背景
-    * User Scenario｜用户场景
-    * Product Goal｜产品目标
-    * MVP Scope｜最小功能范围
-    * User Flow｜核心用户流程
-    * AI Capability｜AI 能力
-    * Non-goals｜暂不做什么
-    * Next Iteration｜后续迭代
+    * 背景
+    * 用户场景
+    * 产品目标
+    * 最小功能范围
+    * 核心用户流程
+    * AI 能力
+    * 暂不做什么
+    * 后续迭代
 
 产品想法：
 [在这里粘贴产品想法]
 ```
 
-## Codex Build Instruction
+## Codex 开发执行指令
 
-- Category｜分类：Codex Instructions
-- Use Case｜适用场景：给 Codex 提供清晰的代码修改范围、目标和限制。
+- 分类：Codex 开发指令
+- 适用场景：给 Codex 提供清晰的代码修改范围、目标和限制。
 
 ```text
 请基于以下需求修改当前项目代码。
@@ -43,7 +43,7 @@ This document records the 8 default prompt templates built into the local app.
 3. 优先做最小可用版本，不要扩大功能范围。
 4. 修改完成后检查页面是否可以正常运行。
 5. 如果涉及文案和 UI，请保持简洁、清晰、轻量。
-6. 完成后只总结修改内容，不要 commit，不要 push。
+6. 完成后只总结修改内容，不要提交，不要推送。
 
 项目目标：
 [填写项目目标]
@@ -55,10 +55,10 @@ This document records the 8 default prompt templates built into the local app.
 [填写不希望改动的文件或功能]
 ```
 
-## UI Refinement Prompt
+## UI 优化提示词
 
-- Category｜分类：UI Refinement
-- Use Case｜适用场景：在不重构功能逻辑的前提下优化页面视觉与基础适配。
+- 分类：UI 优化
+- 适用场景：在不重构功能逻辑的前提下优化页面视觉与基础适配。
 
 ```text
 请优化当前页面 UI，但不要重构功能逻辑。
@@ -79,10 +79,10 @@ This document records the 8 default prompt templates built into the local app.
 [描述期望风格]
 ```
 
-## Bug Fix Prompt
+## 问题排查与修复提示词
 
-- Category｜分类：Debug & Fix
-- Use Case｜适用场景：描述项目问题、复现路径和期望结果，并要求做最小修复。
+- 分类：问题修复
+- 适用场景：描述项目问题、复现路径和期望结果，并要求做最小修复。
 
 ```text
 请帮我修复当前项目中的问题。
@@ -94,7 +94,7 @@ This document records the 8 default prompt templates built into the local app.
 3. 做最小必要修改，不要顺手重构无关代码。
 4. 修复后说明修改了哪些文件。
 5. 检查是否引入新的问题。
-6. 完成后只总结修改内容，不要 commit，不要 push。
+6. 完成后只总结修改内容，不要提交，不要推送。
 
 问题描述：
 [填写问题现象]
@@ -106,10 +106,10 @@ This document records the 8 default prompt templates built into the local app.
 [填写正确表现]
 ```
 
-## README Project Record Prompt
+## 项目 README 编写提示词
 
-- Category｜分类：README Writing
-- Use Case｜适用场景：为一个轻量 Vibe Coding 项目整理公开项目 README。
+- 分类：README 编写
+- 适用场景：为一个轻量 Vibe Coding 项目整理公开项目 README。
 
 ```text
 请为这个 Vibe Coding 项目整理一份 GitHub README。
@@ -129,16 +129,16 @@ This document records the 8 default prompt templates built into the local app.
     * 本次改造范围
     * 运行方式
     * 后续计划
-    * Reference
+    * 参考来源
 
 项目信息：
 [粘贴项目说明]
 ```
 
-## Changelog Prompt
+## 版本更新记录提示词
 
-- Category｜分类：Changelog Writing
-- Use Case｜适用场景：把原始改动记录整理成适合 GitHub 项目记录的 changelog。
+- 分类：Changelog 记录
+- 适用场景：把原始改动记录整理成适合 GitHub 项目记录的 Changelog。
 
 ```text
 请根据以下改动记录，整理一份 changelog。
@@ -163,10 +163,10 @@ This document records the 8 default prompt templates built into the local app.
 [填写下一步计划]
 ```
 
-## User Flow Prompt
+## 用户流程整理提示词
 
-- Category｜分类：User Flow
-- Use Case｜适用场景：为轻量产品整理从进入页面到完成核心任务的用户流程。
+- 分类：用户流程
+- 适用场景：为轻量产品整理从进入页面到完成核心任务的用户流程。
 
 ```text
 请为以下轻量产品整理用户流程。
@@ -188,17 +188,17 @@ This document records the 8 default prompt templates built into the local app.
 [填写当前版本功能范围]
 ```
 
-## Product Structure Prompt
+## 产品结构整理提示词
 
-- Category｜分类：Product Structure
-- Use Case｜适用场景：为轻量项目整理页面结构、模块结构和 Prompt 相关能力。
+- 分类：产品结构
+- 适用场景：为轻量项目整理页面结构、模块结构和提示词相关能力。
 
 ```text
 请为以下项目整理产品结构说明。
 
 要求：
 
-1. 说明页面结构、核心模块、数据结构和 AI / Prompt 相关能力。
+1. 说明页面结构、核心模块、数据结构和 AI / 提示词相关能力。
 2. 不要写成技术架构说明书。
 3. 重点体现产品模块如何支撑用户完成任务。
 4. 输出适合放入 GitHub 项目的 product-structure.md。

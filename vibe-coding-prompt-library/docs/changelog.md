@@ -1,4 +1,18 @@
-# Changelog｜Vibe Coding Prompt Library
+# Changelog｜Vibe Coding 提示词资料库
+
+## v0.1.1｜中文本地化版本
+
+### 更新说明
+
+- Completed Chinese UI localization.
+- Updated default prompt categories and templates.
+- Improved usability for Chinese Vibe Coding workflows.
+
+### 中文说明
+
+- 完成页面 UI 中文化，包括标题、分类、按钮、表单标签和交互反馈。
+- 更新 8 个默认提示词分类、模板标题、说明和正文中的英文说明。
+- 提升中文 Vibe Coding 工作流下的使用体验。
 
 ## v0.1.0｜Initial Remix
 
