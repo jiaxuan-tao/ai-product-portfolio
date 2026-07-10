@@ -1,5 +1,26 @@
 # Changelog｜Vibe Coding 提示词资料库
 
+## v0.2.0｜提示词组织能力
+
+### Added
+
+- Added tags for prompts, including search and card display support.
+- Added favorite marking and a dedicated favorite filter.
+- Added custom category creation, rename, and delete flows.
+- Added required category reassignment when deleting a custom category.
+- Added `schemaVersion: 2` exports with custom categories, while retaining v1 import compatibility.
+- Added v0.2.0 iteration documentation and README usage instructions.
+
+### Changed
+
+- Expanded local data persistence to include tags, favorites, and custom categories.
+- Updated reset behavior to clear custom prompts, tags, favorites, and custom categories together.
+
+### Not Included
+
+- No cloud sync, login, backend service, or AI API.
+- No recent-use sorting or template version history.
+
 ## v0.1.2｜本地数据迁移
 
 ### Added

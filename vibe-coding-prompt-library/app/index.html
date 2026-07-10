@@ -217,6 +217,121 @@
       line-height: 1.45;
     }
 
+    .category-manager {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .section-label {
+      margin: 0 0 8px;
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .compact-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+    }
+
+    .compact-row .input {
+      min-width: 0;
+    }
+
+    .custom-category-list {
+      display: grid;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    .custom-category-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      align-items: center;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .custom-category-name {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .text-button {
+      border: 0;
+      padding: 2px 0;
+      background: transparent;
+      color: var(--blue);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .text-button.danger {
+      color: var(--red);
+    }
+
+    .tag.favorite {
+      border-color: rgba(26, 127, 55, 0.3);
+      background: var(--green-soft);
+      color: var(--green);
+    }
+
+    .check-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .check-row input {
+      width: 16px;
+      height: 16px;
+      margin: 0;
+      accent-color: var(--green);
+    }
+
+    .dialog {
+      width: min(420px, calc(100vw - 32px));
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0;
+      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+
+    .dialog::backdrop {
+      background: rgba(27, 31, 36, 0.32);
+    }
+
+    .dialog-form {
+      display: grid;
+      gap: 14px;
+      padding: 18px;
+    }
+
+    .dialog-title {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .dialog-copy {
+      margin: -6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
     .search-row {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -487,6 +602,14 @@
         </div>
         <div class="panel-body">
           <nav class="category-list" id="categoryList" aria-label="提示词分类"></nav>
+          <section class="category-manager" aria-label="自定义分类管理">
+            <p class="section-label">自定义分类</p>
+            <div class="compact-row">
+              <input class="input" id="customCategoryInput" placeholder="输入分类名称" aria-label="自定义分类名称">
+              <button class="button" id="addCategoryButton" type="button">添加</button>
+            </div>
+            <div class="custom-category-list" id="customCategoryList"></div>
+          </section>
           <div class="library-actions">
             <button class="button" id="newPromptButton" type="button">新建提示词</button>
             <div class="backup-actions">
@@ -537,6 +660,15 @@
               <input class="input" id="descriptionInput" name="description">
             </div>
             <div class="field">
+              <label for="tagsInput">标签</label>
+              <input class="input" id="tagsInput" name="tags" placeholder="用逗号分隔，例如：文档，前端" aria-describedby="tagsHint">
+              <span class="backup-note" id="tagsHint">标签会参与搜索，并在提示词卡片中显示。</span>
+            </div>
+            <label class="check-row" for="favoriteInput">
+              <input id="favoriteInput" name="favorite" type="checkbox">
+              收藏此提示词
+            </label>
+            <div class="field">
               <label for="bodyInput">提示词正文</label>
               <textarea class="textarea" id="bodyInput" name="body" required></textarea>
               <div class="body-footer">
@@ -556,15 +688,47 @@
         </div>
       </section>
     </main>
+
+    <dialog class="dialog" id="renameCategoryDialog">
+      <form class="dialog-form" id="renameCategoryForm">
+        <h2 class="dialog-title">重命名自定义分类</h2>
+        <div class="field">
+          <label for="renameCategoryInput">分类名称</label>
+          <input class="input" id="renameCategoryInput" required>
+        </div>
+        <div class="dialog-actions">
+          <button class="button" id="cancelRenameButton" type="button">取消</button>
+          <button class="button primary" type="submit">保存</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog class="dialog" id="deleteCategoryDialog">
+      <form class="dialog-form" id="deleteCategoryForm">
+        <h2 class="dialog-title">删除自定义分类</h2>
+        <p class="dialog-copy">分类中的提示词会迁移到你选择的分类，不会被删除。</p>
+        <div class="field">
+          <label for="moveCategoryInput">迁移至</label>
+          <select class="select" id="moveCategoryInput"></select>
+        </div>
+        <div class="dialog-actions">
+          <button class="button" id="cancelDeleteCategoryButton" type="button">取消</button>
+          <button class="button danger" type="submit">删除并迁移</button>
+        </div>
+      </form>
+    </dialog>
   </div>
 
   <script>
     // 保留 promptcat 的单文件、本地优先思路，并聚焦 Vibe Coding 提示词模板。
     const STORAGE_KEY = "vibe-coding-prompt-library:v0.1.0";
     const LOCALIZATION_KEY = "vibe-coding-prompt-library:zh-CN-v0.1.1";
-    const EXPORT_SCHEMA_VERSION = 1;
+    const PREFERENCES_KEY = "vibe-coding-prompt-library:preferences:v0.2.0";
+    const EXPORT_SCHEMA_VERSION = 2;
     const EXPORT_FILE_PREFIX = "vibe-coding-prompt-library-backup";
     const ALL_CATEGORY = "全部";
+    const FAVORITES_FILTER = "__favorites__";
+    const FAVORITES_LABEL = "收藏";
     const LEGACY_CATEGORY_MAP = {
       "PRD Prompts": "PRD 提示词",
       "Codex Instructions": "Codex 开发指令",
@@ -798,7 +962,9 @@
       selectedId: null,
       query: "",
       draftIsNew: false,
-      storageAvailable: true
+      storageAvailable: true,
+      customCategories: [],
+      pendingCategory: null
     };
 
     const nodes = {
@@ -807,6 +973,9 @@
       promptList: document.getElementById("promptList"),
       searchInput: document.getElementById("searchInput"),
       clearSearchButton: document.getElementById("clearSearchButton"),
+      customCategoryInput: document.getElementById("customCategoryInput"),
+      addCategoryButton: document.getElementById("addCategoryButton"),
+      customCategoryList: document.getElementById("customCategoryList"),
       newPromptButton: document.getElementById("newPromptButton"),
       exportButton: document.getElementById("exportButton"),
       importButton: document.getElementById("importButton"),
@@ -816,6 +985,8 @@
       titleInput: document.getElementById("titleInput"),
       categoryInput: document.getElementById("categoryInput"),
       descriptionInput: document.getElementById("descriptionInput"),
+      tagsInput: document.getElementById("tagsInput"),
+      favoriteInput: document.getElementById("favoriteInput"),
       bodyInput: document.getElementById("bodyInput"),
       bodyCount: document.getElementById("bodyCount"),
       savedState: document.getElementById("savedState"),
@@ -823,24 +994,37 @@
       duplicateButton: document.getElementById("duplicateButton"),
       deleteButton: document.getElementById("deleteButton"),
       listStatus: document.getElementById("listStatus"),
-      editorStatus: document.getElementById("editorStatus")
+      editorStatus: document.getElementById("editorStatus"),
+      renameCategoryDialog: document.getElementById("renameCategoryDialog"),
+      renameCategoryForm: document.getElementById("renameCategoryForm"),
+      renameCategoryInput: document.getElementById("renameCategoryInput"),
+      cancelRenameButton: document.getElementById("cancelRenameButton"),
+      deleteCategoryDialog: document.getElementById("deleteCategoryDialog"),
+      deleteCategoryForm: document.getElementById("deleteCategoryForm"),
+      moveCategoryInput: document.getElementById("moveCategoryInput"),
+      cancelDeleteCategoryButton: document.getElementById("cancelDeleteCategoryButton")
     };
 
     function cloneDefaults() {
       return DEFAULT_PROMPTS.map((prompt) => ({
         ...prompt,
+        tags: [],
+        isFavorite: false,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }));
     }
 
     function loadPrompts() {
+      loadPreferences();
       const stored = readStoredPrompts();
       const needsLocalization = shouldLocalizeStoredPrompts();
-      state.prompts = Array.isArray(stored) && stored.length
+      const prompts = Array.isArray(stored) && stored.length
         ? (needsLocalization ? localizeStoredPrompts(stored) : stored)
         : cloneDefaults();
-      savePrompts();
+      state.prompts = prompts.map(normalizeStoredPrompt);
+      syncCustomCategoriesWithPrompts();
+      saveLibrary();
       markLocalized();
       state.selectedId = state.prompts[0]?.id || null;
     }
@@ -896,10 +1080,36 @@
       }
     }
 
+    function loadPreferences() {
+      try {
+        const stored = JSON.parse(localStorage.getItem(PREFERENCES_KEY) || "null");
+        state.customCategories = normalizeCustomCategories(stored?.customCategories);
+      } catch (error) {
+        state.customCategories = [];
+      }
+    }
+
+    function savePreferences() {
+      try {
+        localStorage.setItem(PREFERENCES_KEY, JSON.stringify({ customCategories: state.customCategories }));
+        return true;
+      } catch (error) {
+        state.storageAvailable = false;
+        return false;
+      }
+    }
+
+    function saveLibrary() {
+      const promptsSaved = savePrompts();
+      const preferencesSaved = savePreferences();
+      return promptsSaved && preferencesSaved;
+    }
+
     function createExportPayload() {
       return {
         schemaVersion: EXPORT_SCHEMA_VERSION,
         exportedAt: new Date().toISOString(),
+        customCategories: state.customCategories,
         prompts: state.prompts
       };
     }
@@ -929,19 +1139,20 @@
           showEditorStatus(`没有导入新提示词，跳过 ${result.duplicates} 个重复项和 ${result.invalid} 个无效项。`, "error");
           return;
         }
-        const saved = savePrompts();
+        const saved = saveLibrary();
         renderAll();
         const storageNote = saved ? "" : " 浏览器本地存储不可用，内容仅保留在当前页面。";
         showEditorStatus(`已导入 ${result.imported} 个，跳过 ${result.duplicates} 个重复项和 ${result.invalid} 个无效项。${storageNote}`, "success");
       } catch (error) {
-        showEditorStatus("导入失败：请选择符合 v1 格式的 JSON 备份文件。", "error");
+        showEditorStatus("导入失败：请选择符合 v1 或 v2 格式的 JSON 备份文件。", "error");
       } finally {
         event.target.value = "";
       }
     }
 
     function mergeImportedPrompts(payload) {
-      if (!payload || payload.schemaVersion !== EXPORT_SCHEMA_VERSION || !Array.isArray(payload.prompts)) {
+      const schemaVersion = payload?.schemaVersion;
+      if (!payload || ![1, 2].includes(schemaVersion) || !Array.isArray(payload.prompts)) {
         throw new Error("Invalid backup payload");
       }
       const knownIds = new Set(state.prompts.map((prompt) => prompt.id));
@@ -962,6 +1173,12 @@
         additions.push(normalized);
       });
       if (additions.length) state.prompts.unshift(...additions);
+      const importedCategories = schemaVersion === 2 ? normalizeCustomCategories(payload.customCategories) : [];
+      state.customCategories = normalizeCustomCategories([
+        ...state.customCategories,
+        ...importedCategories,
+        ...additions.map((prompt) => prompt.category)
+      ]);
       return { imported: additions.length, duplicates, invalid };
     }
 
@@ -973,31 +1190,76 @@
       const body = typeof prompt.body === "string" ? prompt.body.trim() : "";
       if (!id || !title || !category || !body) return null;
       const now = new Date().toISOString();
-      return {
+      return normalizeStoredPrompt({
         id,
         title,
-        category: LEGACY_CATEGORY_MAP[category] || category,
+        category,
         description: typeof prompt.description === "string" ? prompt.description.trim() : "",
         body,
         isDefault: Boolean(prompt.isDefault),
+        tags: prompt.tags,
+        isFavorite: Boolean(prompt.isFavorite),
         createdAt: typeof prompt.createdAt === "string" ? prompt.createdAt : now,
         updatedAt: typeof prompt.updatedAt === "string" ? prompt.updatedAt : now
+      });
+    }
+
+    function normalizeStoredPrompt(prompt) {
+      const value = prompt && typeof prompt === "object" ? prompt : {};
+      return {
+        ...value,
+        category: LEGACY_CATEGORY_MAP[value.category] || value.category || DEFAULT_CATEGORIES[0],
+        description: typeof value.description === "string" ? value.description : "",
+        tags: normalizeTags(value.tags),
+        isFavorite: Boolean(value.isFavorite)
       };
     }
 
+    function normalizeTags(tags) {
+      const values = Array.isArray(tags) ? tags : typeof tags === "string" ? tags.split(/[,，]/) : [];
+      return Array.from(new Set(values
+        .filter((tag) => typeof tag === "string")
+        .map((tag) => tag.trim())
+        .filter(Boolean)));
+    }
+
+    function normalizeCustomCategories(categories) {
+      const values = Array.isArray(categories) ? categories : [];
+      return Array.from(new Set(values
+        .filter((category) => typeof category === "string")
+        .map((category) => category.trim())
+        .filter((category) => category
+          && !DEFAULT_CATEGORIES.includes(category)
+          && category !== ALL_CATEGORY
+          && category !== FAVORITES_LABEL)));
+    }
+
+    function syncCustomCategoriesWithPrompts() {
+      state.customCategories = normalizeCustomCategories([
+        ...state.customCategories,
+        ...state.prompts.map((prompt) => prompt.category)
+      ]);
+    }
+
+    function getEditableCategories() {
+      return [...DEFAULT_CATEGORIES, ...state.customCategories];
+    }
+
     function getCategories() {
-      const extra = state.prompts
-        .map((prompt) => prompt.category)
-        .filter(Boolean)
-        .filter((category) => !DEFAULT_CATEGORIES.includes(category));
-      return [ALL_CATEGORY, ...DEFAULT_CATEGORIES, ...Array.from(new Set(extra)).sort()];
+      return [
+        { id: ALL_CATEGORY, label: ALL_CATEGORY },
+        { id: FAVORITES_FILTER, label: FAVORITES_LABEL },
+        ...getEditableCategories().map((category) => ({ id: category, label: category }))
+      ];
     }
 
     function getFilteredPrompts() {
       const query = state.query.trim().toLowerCase();
       return state.prompts.filter((prompt) => {
-        const matchesCategory = state.selectedCategory === ALL_CATEGORY || prompt.category === state.selectedCategory;
-        const haystack = [prompt.title, prompt.category, prompt.description, prompt.body].join(" ").toLowerCase();
+        const matchesCategory = state.selectedCategory === ALL_CATEGORY
+          || (state.selectedCategory === FAVORITES_FILTER && prompt.isFavorite)
+          || prompt.category === state.selectedCategory;
+        const haystack = [prompt.title, prompt.category, prompt.description, prompt.body, ...prompt.tags].join(" ").toLowerCase();
         const matchesQuery = !query || haystack.includes(query);
         return matchesCategory && matchesQuery;
       });
@@ -1006,18 +1268,36 @@
     function renderCategories() {
       const categories = getCategories();
       nodes.totalCount.textContent = String(state.prompts.length);
-      nodes.categoryInput.innerHTML = DEFAULT_CATEGORIES.map((category) => (
+      nodes.categoryInput.innerHTML = getEditableCategories().map((category) => (
         `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`
       )).join("");
       nodes.categoryList.innerHTML = categories.map((category) => {
-        const count = category === ALL_CATEGORY
+        const count = category.id === ALL_CATEGORY
           ? state.prompts.length
-          : state.prompts.filter((prompt) => prompt.category === category).length;
-        const isActive = category === state.selectedCategory ? " active" : "";
-        return `<button class="category-button${isActive}" type="button" data-category="${escapeHtml(category)}">
-          <span>${escapeHtml(category)}</span>
+          : category.id === FAVORITES_FILTER
+            ? state.prompts.filter((prompt) => prompt.isFavorite).length
+            : state.prompts.filter((prompt) => prompt.category === category.id).length;
+        const isActive = category.id === state.selectedCategory ? " active" : "";
+        return `<button class="category-button${isActive}" type="button" data-category="${escapeHtml(category.id)}">
+          <span>${escapeHtml(category.label)}</span>
           <span class="count">${count}</span>
         </button>`;
+      }).join("");
+      renderCustomCategories();
+    }
+
+    function renderCustomCategories() {
+      if (!state.customCategories.length) {
+        nodes.customCategoryList.innerHTML = `<p class="backup-note">暂无自定义分类。</p>`;
+        return;
+      }
+      nodes.customCategoryList.innerHTML = state.customCategories.map((category) => {
+        const count = state.prompts.filter((prompt) => prompt.category === category).length;
+        return `<div class="custom-category-row">
+          <span class="custom-category-name">${escapeHtml(category)}（${count}）</span>
+          <button class="text-button" type="button" data-rename-category="${escapeHtml(category)}">重命名</button>
+          <button class="text-button danger" type="button" data-delete-category="${escapeHtml(category)}">删除</button>
+        </div>`;
       }).join("");
     }
 
@@ -1031,11 +1311,15 @@
       nodes.promptList.innerHTML = prompts.map((prompt) => {
         const isActive = prompt.id === state.selectedId ? " active" : "";
         const sourceTag = prompt.isDefault ? `<span class="tag default">默认</span>` : `<span class="tag">已保存</span>`;
+        const favoriteTag = prompt.isFavorite ? `<span class="tag favorite">收藏</span>` : "";
+        const tagList = prompt.tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("");
         return `<button class="prompt-card${isActive}" type="button" data-id="${escapeHtml(prompt.id)}">
           <h2>${escapeHtml(prompt.title)}</h2>
           <div class="prompt-meta">
             <span class="tag">${escapeHtml(prompt.category)}</span>
             ${sourceTag}
+            ${favoriteTag}
+            ${tagList}
           </div>
           <p>${escapeHtml(prompt.description || "暂无说明")}</p>
         </button>`;
@@ -1046,8 +1330,10 @@
       const prompt = state.prompts.find((item) => item.id === state.selectedId);
       const draft = prompt || getBlankPrompt();
       nodes.titleInput.value = draft.title || "";
-      nodes.categoryInput.value = DEFAULT_CATEGORIES.includes(draft.category) ? draft.category : DEFAULT_CATEGORIES[0];
+      nodes.categoryInput.value = getEditableCategories().includes(draft.category) ? draft.category : DEFAULT_CATEGORIES[0];
       nodes.descriptionInput.value = draft.description || "";
+      nodes.tagsInput.value = draft.tags.join("，");
+      nodes.favoriteInput.checked = Boolean(draft.isFavorite);
       nodes.bodyInput.value = draft.body || "";
       nodes.savedState.textContent = prompt ? `已保存 ${formatDate(prompt.updatedAt)}` : "新建提示词";
       nodes.deleteButton.disabled = !prompt || prompt.isDefault;
@@ -1074,6 +1360,8 @@
         category: DEFAULT_CATEGORIES[0],
         description: "",
         body: "",
+        tags: [],
+        isFavorite: false,
         isDefault: false
       };
     }
@@ -1097,6 +1385,8 @@
         ...source,
         id: createId(source.title),
         title: `${source.title} 副本`,
+        tags: [...source.tags],
+        isFavorite: false,
         isDefault: false,
         createdAt: now,
         updatedAt: now
@@ -1113,6 +1403,8 @@
       const title = nodes.titleInput.value.trim();
       const category = nodes.categoryInput.value;
       const description = nodes.descriptionInput.value.trim();
+      const tags = normalizeTags(nodes.tagsInput.value);
+      const isFavorite = nodes.favoriteInput.checked;
       const body = nodes.bodyInput.value.trim();
       if (!title || !body) {
         showEditorStatus("请填写标题和提示词正文。", "error");
@@ -1126,6 +1418,8 @@
           title,
           category,
           description,
+          tags,
+          isFavorite,
           body,
           updatedAt: now
         };
@@ -1135,6 +1429,8 @@
           title,
           category,
           description,
+          tags,
+          isFavorite,
           body,
           isDefault: false,
           createdAt: now,
@@ -1145,6 +1441,89 @@
       }
       const saved = savePrompts();
       showEditorStatus(saved ? "已保存到本地。" : "已保存到当前页面，浏览器本地存储不可用。", "success");
+      renderAll();
+    }
+
+    function addCustomCategory() {
+      const category = nodes.customCategoryInput.value.trim();
+      if (!isValidNewCategory(category)) return;
+      state.customCategories.push(category);
+      state.customCategories = normalizeCustomCategories(state.customCategories);
+      nodes.customCategoryInput.value = "";
+      const saved = savePreferences();
+      showEditorStatus(saved ? `已添加“${category}”。` : `已添加“${category}”，但浏览器本地存储不可用。`, "success");
+      renderAll();
+    }
+
+    function isValidNewCategory(category, currentCategory = "") {
+      if (!category) {
+        showEditorStatus("请输入分类名称。", "error");
+        return false;
+      }
+      const categories = getEditableCategories();
+      const isDuplicate = categories.some((item) => item === category && item !== currentCategory);
+      if (category === ALL_CATEGORY || category === FAVORITES_LABEL || isDuplicate) {
+        showEditorStatus("分类名称已存在或不可用。", "error");
+        return false;
+      }
+      return true;
+    }
+
+    function openRenameCategory(category) {
+      if (!state.customCategories.includes(category)) return;
+      state.pendingCategory = category;
+      nodes.renameCategoryInput.value = category;
+      nodes.renameCategoryDialog.showModal();
+      nodes.renameCategoryInput.focus();
+    }
+
+    function renameCustomCategory(event) {
+      event.preventDefault();
+      const current = state.pendingCategory;
+      const next = nodes.renameCategoryInput.value.trim();
+      if (!current || !state.customCategories.includes(current)) return;
+      if (next === current) {
+        nodes.renameCategoryDialog.close();
+        return;
+      }
+      if (!isValidNewCategory(next, current)) return;
+      state.customCategories = state.customCategories.map((category) => category === current ? next : category);
+      state.prompts = state.prompts.map((prompt) => (
+        prompt.category === current ? { ...prompt, category: next, updatedAt: new Date().toISOString() } : prompt
+      ));
+      if (state.selectedCategory === current) state.selectedCategory = next;
+      const saved = saveLibrary();
+      nodes.renameCategoryDialog.close();
+      state.pendingCategory = null;
+      showEditorStatus(saved ? "已重命名自定义分类。" : "已重命名，但浏览器本地存储不可用。", "success");
+      renderAll();
+    }
+
+    function openDeleteCategory(category) {
+      if (!state.customCategories.includes(category)) return;
+      state.pendingCategory = category;
+      const destinations = getEditableCategories().filter((item) => item !== category);
+      nodes.moveCategoryInput.innerHTML = destinations.map((item) => (
+        `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`
+      )).join("");
+      nodes.deleteCategoryDialog.showModal();
+    }
+
+    function deleteCustomCategory(event) {
+      event.preventDefault();
+      const category = state.pendingCategory;
+      const destination = nodes.moveCategoryInput.value;
+      if (!category || !state.customCategories.includes(category) || !getEditableCategories().includes(destination)) return;
+      const now = new Date().toISOString();
+      state.prompts = state.prompts.map((prompt) => (
+        prompt.category === category ? { ...prompt, category: destination, updatedAt: now } : prompt
+      ));
+      state.customCategories = state.customCategories.filter((item) => item !== category);
+      if (state.selectedCategory === category) state.selectedCategory = destination;
+      const saved = saveLibrary();
+      nodes.deleteCategoryDialog.close();
+      state.pendingCategory = null;
+      showEditorStatus(saved ? `已删除分类，并迁移到“${destination}”。` : "已迁移分类，但浏览器本地存储不可用。", "success");
       renderAll();
     }
 
@@ -1192,14 +1571,15 @@
     }
 
     function resetDefaults() {
-      const confirmed = window.confirm("确定恢复为 8 个默认模板吗？");
+      const confirmed = window.confirm("确定恢复默认模板吗？自定义提示词、标签、收藏和自定义分类将被清除。");
       if (!confirmed) return;
       state.prompts = cloneDefaults();
+      state.customCategories = [];
       state.selectedCategory = ALL_CATEGORY;
       state.selectedId = state.prompts[0]?.id || null;
       state.query = "";
       nodes.searchInput.value = "";
-      const saved = savePrompts();
+      const saved = saveLibrary();
       showEditorStatus(saved ? "已恢复默认模板。" : "已在当前页面恢复默认模板。", "success");
       renderAll();
     }
@@ -1252,6 +1632,13 @@
       renderAll();
     });
 
+    nodes.customCategoryList.addEventListener("click", (event) => {
+      const renameButton = event.target.closest("[data-rename-category]");
+      const deleteButton = event.target.closest("[data-delete-category]");
+      if (renameButton) openRenameCategory(renameButton.dataset.renameCategory);
+      if (deleteButton) openDeleteCategory(deleteButton.dataset.deleteCategory);
+    });
+
     nodes.promptList.addEventListener("click", (event) => {
       const button = event.target.closest("[data-id]");
       if (!button) return;
@@ -1271,6 +1658,13 @@
     });
 
     nodes.newPromptButton.addEventListener("click", startNewPrompt);
+    nodes.addCategoryButton.addEventListener("click", addCustomCategory);
+    nodes.customCategoryInput.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        addCustomCategory();
+      }
+    });
     nodes.exportButton.addEventListener("click", exportPrompts);
     nodes.importButton.addEventListener("click", () => nodes.importInput.click());
     nodes.importInput.addEventListener("change", importPrompts);
@@ -1279,6 +1673,10 @@
     nodes.copyButton.addEventListener("click", copyBody);
     nodes.duplicateButton.addEventListener("click", duplicatePrompt);
     nodes.deleteButton.addEventListener("click", deleteCurrentPrompt);
+    nodes.renameCategoryForm.addEventListener("submit", renameCustomCategory);
+    nodes.deleteCategoryForm.addEventListener("submit", deleteCustomCategory);
+    nodes.cancelRenameButton.addEventListener("click", () => nodes.renameCategoryDialog.close());
+    nodes.cancelDeleteCategoryButton.addEventListener("click", () => nodes.deleteCategoryDialog.close());
     nodes.bodyInput.addEventListener("input", () => {
       updateBodyCount();
       nodes.savedState.textContent = "有未保存的修改";
@@ -1287,6 +1685,12 @@
       nodes.savedState.textContent = "有未保存的修改";
     });
     nodes.descriptionInput.addEventListener("input", () => {
+      nodes.savedState.textContent = "有未保存的修改";
+    });
+    nodes.tagsInput.addEventListener("input", () => {
+      nodes.savedState.textContent = "有未保存的修改";
+    });
+    nodes.favoriteInput.addEventListener("change", () => {
       nodes.savedState.textContent = "有未保存的修改";
     });
     nodes.categoryInput.addEventListener("change", () => {
