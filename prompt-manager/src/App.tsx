@@ -1,5 +1,7 @@
 import {
   ArrowLeft,
+  ArrowCounterClockwise,
+  ArrowsLeftRight,
   ArrowsOutSimple,
   BracketsCurly,
   Briefcase,
@@ -22,6 +24,7 @@ import {
   PenNib,
   PencilSimple,
   Plus,
+  SlidersHorizontal,
   Sparkle,
   SquaresFour,
   Star,
@@ -34,11 +37,23 @@ import {
   WarningCircle,
   X,
 } from "@phosphor-icons/react";
+import { diffLines } from "diff";
 import { useLiveQuery } from "dexie-react-hooks";
 import { type ChangeEvent, type FormEvent, type ReactNode, useEffect, useMemo, useRef, useState } from "react";
-import { createBackup, db, deletePrompt, deleteScene, importBackup, seedDatabase } from "./db";
-import type { ImportMode, PromptBackup, PromptItem, PromptVersion, Scene, SceneIcon } from "./types";
-import { formatDate, newId, nextVersion, normalizeBackup, textSnippet } from "./utils";
+import {
+  createBackup,
+  db,
+  deletePrompt,
+  deleteScene,
+  importBackup,
+  movePromptToTrash,
+  moveSceneToTrash,
+  restorePrompt,
+  restoreScene,
+  seedDatabase,
+} from "./db";
+import type { ImportMode, LibraryMode, PromptBackup, PromptItem, PromptSort, PromptVersion, Scene, SceneIcon } from "./types";
+import { extractVariables, formatDate, newId, nextVersion, normalizeBackup, renderTemplate, textSnippet } from "./utils";
 
 const iconMap = {
   briefcase: Briefcase,
@@ -55,10 +70,20 @@ type ModalState =
   | { type: "scene"; scene?: Scene }
   | { type: "prompt" }
   | { type: "version" }
+  | { type: "compare" }
+  | { type: "variables" }
   | { type: "import"; backup: PromptBackup }
   | { type: "delete-scene"; scene: Scene }
   | { type: "delete-prompt"; prompt: PromptItem }
+  | { type: "permanent-scene"; scene: Scene }
+  | { type: "permanent-prompt"; prompt: PromptItem }
   | null;
+
+interface ToastState {
+  message: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}
 
 function Modal({ title, children, onClose, wide = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean }) {
   return (
@@ -87,11 +112,12 @@ function SceneGlyph({ scene, size = 19 }: { scene: Scene; size?: number }) {
   return <Glyph size={size} weight="duotone" />;
 }
 
-function Toast({ message }: { message: string }) {
+function Toast({ toast }: { toast: ToastState }) {
   return (
     <div className="toast" role="status">
       <Check size={18} weight="bold" />
-      {message}
+      <span>{toast.message}</span>
+      {toast.actionLabel && toast.onAction && <button onClick={toast.onAction}>{toast.actionLabel}</button>}
     </div>
   );
 }
@@ -112,12 +138,19 @@ export function App() {
     localStorage.getItem("prompt-manager-theme") === "dark" ? "dark" : "light",
   );
   const [modal, setModal] = useState<ModalState>(null);
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState<ToastState | null>(null);
+  const [libraryMode, setLibraryMode] = useState<LibraryMode>("scene");
+  const [sort, setSort] = useState<PromptSort>("updated");
+  const [tagFilter, setTagFilter] = useState("");
   const [editorContent, setEditorContent] = useState("");
   const [previewVersionId, setPreviewVersionId] = useState<string | null>(null);
   const [editorFullscreen, setEditorFullscreen] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const activeScenes = useMemo(() => scenes.filter((scene) => !scene.deletedAt), [scenes]);
+  const activePrompts = useMemo(() => prompts.filter((prompt) => !prompt.deletedAt), [prompts]);
+  const trashedPrompts = useMemo(() => prompts.filter((prompt) => prompt.deletedAt), [prompts]);
+  const trashedScenes = useMemo(() => scenes.filter((scene) => scene.deletedAt), [scenes]);
 
   useEffect(() => {
     void seedDatabase();
@@ -129,13 +162,13 @@ export function App() {
   }, [theme]);
 
   useEffect(() => {
-    if (!selectedSceneId && scenes.length) setSelectedSceneId(scenes[0].id);
-    if (selectedSceneId && scenes.length && !scenes.some((scene) => scene.id === selectedSceneId)) {
-      setSelectedSceneId(scenes[0].id);
+    if (!selectedSceneId && activeScenes.length) setSelectedSceneId(activeScenes[0].id);
+    if (selectedSceneId && activeScenes.length && !activeScenes.some((scene) => scene.id === selectedSceneId)) {
+      setSelectedSceneId(activeScenes[0].id);
     }
-  }, [scenes, selectedSceneId]);
+  }, [activeScenes, selectedSceneId]);
 
-  const selectedScene = scenes.find((scene) => scene.id === selectedSceneId);
+  const selectedScene = activeScenes.find((scene) => scene.id === selectedSceneId);
   const selectedPrompt = prompts.find((prompt) => prompt.id === selectedPromptId);
 
   useEffect(() => {
@@ -167,39 +200,58 @@ export function App() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [editorFullscreen, selectedPromptId]);
 
-  const notify = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 2200);
+  const notify = (message: string, action?: { label: string; run: () => void }) => {
+    setToast({
+      message,
+      actionLabel: action?.label,
+      onAction: action ? () => { action.run(); setToast(null); } : undefined,
+    });
+    window.setTimeout(() => setToast(null), action ? 5200 : 2200);
   };
 
   const sceneCount = useMemo(() => {
     const counts = new Map<string, number>();
-    prompts.forEach((prompt) => counts.set(prompt.sceneId, (counts.get(prompt.sceneId) ?? 0) + 1));
+    activePrompts.forEach((prompt) => counts.set(prompt.sceneId, (counts.get(prompt.sceneId) ?? 0) + 1));
     return counts;
-  }, [prompts]);
+  }, [activePrompts]);
+
+  const availableTags = useMemo(() => [...new Set(activePrompts.flatMap((prompt) => prompt.tags))].sort(), [activePrompts]);
 
   const visiblePrompts = useMemo(() => {
     const needle = query.trim().toLocaleLowerCase("zh-CN");
     if (needle) {
-      return prompts.filter((prompt) => {
-        const scene = scenes.find((item) => item.id === prompt.sceneId);
+      return activePrompts.filter((prompt) => {
+        const scene = activeScenes.find((item) => item.id === prompt.sceneId);
         return [prompt.title, prompt.summary, prompt.content, prompt.tags.join(" "), scene?.name ?? ""]
           .join(" ")
           .toLocaleLowerCase("zh-CN")
           .includes(needle);
       });
     }
-    return prompts.filter((prompt) => prompt.sceneId === selectedSceneId);
-  }, [prompts, query, scenes, selectedSceneId]);
+    let result = activePrompts;
+    if (libraryMode === "scene") result = result.filter((prompt) => prompt.sceneId === selectedSceneId);
+    if (libraryMode === "favorites") result = result.filter((prompt) => prompt.isFavorite);
+    if (libraryMode === "recent") result = result.filter((prompt) => prompt.lastUsedAt);
+    if (libraryMode === "trash") return trashedPrompts;
+    if (tagFilter) result = result.filter((prompt) => prompt.tags.includes(tagFilter));
+    return [...result].sort((a, b) => {
+      if (sort === "name") return a.title.localeCompare(b.title, "zh-CN");
+      const field = sort === "used" ? "lastUsedAt" : "updatedAt";
+      return (b[field] ?? "").localeCompare(a[field] ?? "");
+    });
+  }, [activePrompts, activeScenes, libraryMode, query, selectedSceneId, sort, tagFilter, trashedPrompts]);
 
   const openPrompt = (prompt: PromptItem) => {
+    if (prompt.deletedAt) return;
     setSelectedPromptId(prompt.id);
     setSelectedSceneId(prompt.sceneId);
     setQuery("");
+    void db.prompts.update(prompt.id, { lastUsedAt: new Date().toISOString() });
   };
 
   const copyPrompt = async (prompt: PromptItem) => {
     await navigator.clipboard.writeText(prompt.content);
+    await db.prompts.update(prompt.id, { lastUsedAt: new Date().toISOString() });
     notify("提示词已复制");
   };
 
@@ -260,7 +312,7 @@ export function App() {
           <button onClick={() => void exportData()}><DownloadSimple size={19} />导出</button>
           <button onClick={() => importInputRef.current?.click()}><UploadSimple size={19} />导入</button>
           <input ref={importInputRef} type="file" accept="application/json" hidden onChange={(event) => void readImport(event)} />
-          <a href="https://github.com/jiaxuan-tao/prompt-manager/issues" target="_blank" rel="noreferrer">
+          <a href="https://github.com/jiaxuan-tao/ai-product-portfolio/issues" target="_blank" rel="noreferrer">
             <ChatCircleDots size={19} />意见反馈
           </a>
           <span className="author"><User size={18} />Jiaxuan Tao</span>
@@ -307,6 +359,8 @@ export function App() {
             notify(`已生成 ${number}`);
           }}
           onSaveVersion={() => setModal({ type: "version" })}
+          onCompare={() => setModal({ type: "compare" })}
+          onVariables={() => setModal({ type: "variables" })}
           onToggleFavorite={() => void db.prompts.update(selectedPrompt.id, { isFavorite: !selectedPrompt.isFavorite })}
           onCopy={() => void copyPrompt(selectedPrompt)}
           onDelete={() => setModal({ type: "delete-prompt", prompt: selectedPrompt })}
@@ -328,18 +382,20 @@ export function App() {
               </button>
             </div>
             <div className="scene-list">
-              {scenes.map((scene) => (
+              {activeScenes.map((scene) => (
                 <article
-                  className={`scene-card ${scene.id === selectedSceneId && !query ? "selected" : ""}`}
+                  className={`scene-card ${scene.id === selectedSceneId && !query && libraryMode === "scene" ? "selected" : ""}`}
                   key={scene.id}
                   tabIndex={0}
                   onClick={() => {
                     setSelectedSceneId(scene.id);
+                    setLibraryMode("scene");
                     setQuery("");
                   }}
                   onKeyDown={(event) => {
                     if (event.key === "Enter") {
                       setSelectedSceneId(scene.id);
+                      setLibraryMode("scene");
                       setQuery("");
                     }
                   }}
@@ -362,6 +418,11 @@ export function App() {
                 </article>
               ))}
             </div>
+            <div className="library-nav" aria-label="资源视图">
+              <button className={libraryMode === "favorites" ? "active" : ""} onClick={() => { setLibraryMode("favorites"); setQuery(""); }}><Star size={18} />我的收藏</button>
+              <button className={libraryMode === "recent" ? "active" : ""} onClick={() => { setLibraryMode("recent"); setQuery(""); }}><ClockCounterClockwise size={18} />最近使用</button>
+              <button className={libraryMode === "trash" ? "active" : ""} onClick={() => { setLibraryMode("trash"); setQuery(""); }}><Trash size={18} />回收站<span>{trashedPrompts.length + trashedScenes.length}</span></button>
+            </div>
             <div className="privacy-note">
               <span><FolderOpen size={19} weight="duotone" /></span>
               <div><strong>本地优先</strong><p>所有内容仅保存在当前浏览器</p></div>
@@ -371,34 +432,55 @@ export function App() {
           <main className="prompt-panel">
             <div className="prompt-heading">
               <div>
-                <p className="eyebrow">{query ? "全文检索" : "当前场景"}</p>
-                <h1>{query ? `“${query}” 的搜索结果` : selectedScene?.name}</h1>
-                <p>{visiblePrompts.length} 个提示词{!query && selectedScene ? ` · ${selectedScene.description}` : ""}</p>
+                <p className="eyebrow">{query ? "全文检索" : libraryMode === "scene" ? "当前场景" : "资源视图"}</p>
+                <h1>{query ? `“${query}” 的搜索结果` : libraryMode === "scene" ? selectedScene?.name : libraryMode === "favorites" ? "我的收藏" : libraryMode === "recent" ? "最近使用" : "回收站"}</h1>
+                <p>{visiblePrompts.length} 个提示词{!query && libraryMode === "scene" && selectedScene ? ` · ${selectedScene.description}` : libraryMode === "trash" ? ` · ${trashedScenes.length} 个已删除场景` : ""}</p>
               </div>
               <div className="prompt-heading-actions">
-                {!query && <button className="primary-button" onClick={() => setModal({ type: "prompt" })}><FilePlus size={19} />新建提示词</button>}
+                {!query && libraryMode === "scene" && <button className="primary-button" onClick={() => setModal({ type: "prompt" })}><FilePlus size={19} />新建提示词</button>}
                 <div className="view-switcher" aria-label="视图切换">
                   <button className={view === "grid" ? "active" : ""} onClick={() => setView("grid")} aria-label="卡片视图"><SquaresFour size={19} /></button>
                   <button className={view === "list" ? "active" : ""} onClick={() => setView("list")} aria-label="列表视图"><ListBullets size={19} /></button>
                 </div>
               </div>
             </div>
+            {!query && libraryMode !== "trash" && (
+              <div className="filter-bar">
+                <span><SlidersHorizontal size={17} />筛选排序</span>
+                <select value={tagFilter} onChange={(event) => setTagFilter(event.target.value)} aria-label="按标签筛选">
+                  <option value="">全部标签</option>
+                  {availableTags.map((tag) => <option key={tag} value={tag}>{tag}</option>)}
+                </select>
+                <select value={sort} onChange={(event) => setSort(event.target.value as PromptSort)} aria-label="提示词排序">
+                  <option value="updated">最近更新</option>
+                  <option value="used">最近使用</option>
+                  <option value="name">名称排序</option>
+                </select>
+              </div>
+            )}
+            {libraryMode === "trash" && trashedScenes.length > 0 && (
+              <div className="trash-scenes">
+                {trashedScenes.map((scene) => (
+                  <div key={scene.id}><span><SceneGlyph scene={scene} />{scene.name}</span><div><button onClick={() => void restoreScene(scene.id)}>恢复场景</button><button className="danger-text" onClick={() => setModal({ type: "permanent-scene", scene })}>永久删除</button></div></div>
+                ))}
+              </div>
+            )}
             {visiblePrompts.length ? (
               <div className={`prompt-grid ${view === "list" ? "list-view" : ""}`}>
                 {visiblePrompts.map((prompt) => {
                   const scene = scenes.find((item) => item.id === prompt.sceneId)!;
                   return (
-                    <article className="prompt-card" key={prompt.id} tabIndex={0} onClick={() => openPrompt(prompt)} onKeyDown={(event) => { if (event.key === "Enter") openPrompt(prompt); }}>
+                    <article className={`prompt-card ${prompt.deletedAt ? "trashed" : ""}`} key={prompt.id} tabIndex={prompt.deletedAt ? -1 : 0} onClick={() => openPrompt(prompt)} onKeyDown={(event) => { if (event.key === "Enter") openPrompt(prompt); }}>
                       <div className="card-topline">
                         <span className="card-scene"><SceneGlyph scene={scene} size={16} />{scene.name}</span>
-                        <button
+                        {!prompt.deletedAt && <button
                           className={`favorite-button ${prompt.isFavorite ? "active" : ""}`}
                           aria-label={prompt.isFavorite ? "取消收藏" : "收藏"}
                           onClick={(event) => {
                             event.stopPropagation();
                             void db.prompts.update(prompt.id, { isFavorite: !prompt.isFavorite });
                           }}
-                        ><Star size={19} weight={prompt.isFavorite ? "fill" : "regular"} /></button>
+                        ><Star size={19} weight={prompt.isFavorite ? "fill" : "regular"} /></button>}
                       </div>
                       <h2>{prompt.title}</h2>
                       <p className="prompt-summary">{prompt.summary || textSnippet(prompt.content)}</p>
@@ -408,7 +490,7 @@ export function App() {
                       <footer>
                         <span># {prompt.currentVersion}</span>
                         <span><ClockCounterClockwise size={15} />{formatDate(prompt.updatedAt)}</span>
-                        <button onClick={(event) => { event.stopPropagation(); void copyPrompt(prompt); }}><Copy size={17} />复制</button>
+                        {prompt.deletedAt ? <span className="trash-actions"><button onClick={(event) => { event.stopPropagation(); void restorePrompt(prompt.id); }}>恢复</button><button className="danger-text" onClick={(event) => { event.stopPropagation(); setModal({ type: "permanent-prompt", prompt }); }}>永久删除</button></span> : <button onClick={(event) => { event.stopPropagation(); void copyPrompt(prompt); }}><Copy size={17} />复制</button>}
                       </footer>
                     </article>
                   );
@@ -417,9 +499,9 @@ export function App() {
             ) : (
               <div className="empty-state">
                 <span><MagnifyingGlass size={32} /></span>
-                <h2>{query ? "没有匹配的提示词" : "这个场景还是空的"}</h2>
-                <p>{query ? "试试标题、正文、标签或场景名称" : "创建第一条提示词，开始沉淀可复用的工作方法。"}</p>
-                {!query && <button className="primary-button" onClick={() => setModal({ type: "prompt" })}><Plus size={18} />新建提示词</button>}
+                <h2>{query ? "没有匹配的提示词" : libraryMode === "trash" ? "回收站是空的" : libraryMode === "favorites" ? "还没有收藏" : libraryMode === "recent" ? "还没有最近使用记录" : "这个场景还是空的"}</h2>
+                <p>{query ? "试试标题、正文、标签或场景名称" : libraryMode === "trash" ? "移入回收站的场景和提示词会显示在这里。" : libraryMode === "favorites" ? "收藏常用提示词后，可以从这里快速找到。" : libraryMode === "recent" ? "打开或复制提示词后，会在这里留下最近使用记录。" : "创建第一条提示词，开始沉淀可复用的工作方法。"}</p>
+                {!query && libraryMode === "scene" && <button className="primary-button" onClick={() => setModal({ type: "prompt" })}><Plus size={18} />新建提示词</button>}
               </div>
             )}
           </main>
@@ -440,26 +522,56 @@ export function App() {
           onSaved={(number) => { setModal(null); setPreviewVersionId(null); notify(`已保存 ${number}`); }}
         />
       )}
+      {modal?.type === "compare" && selectedPrompt && (
+        <VersionCompare versions={versions} onClose={() => setModal(null)} />
+      )}
+      {modal?.type === "variables" && selectedPrompt && (
+        <VariablePreview
+          prompt={selectedPrompt}
+          content={editorContent}
+          onClose={() => setModal(null)}
+          onCopied={() => notify("渲染结果已复制")}
+        />
+      )}
       {modal?.type === "import" && (
         <ImportPreview backup={modal.backup} onClose={() => setModal(null)} onImported={() => { setModal(null); setSelectedPromptId(null); notify("数据导入完成"); }} />
       )}
       {modal?.type === "delete-scene" && (
         <ConfirmDelete
-          title="删除场景？"
-          description={`“${modal.scene.name}”及其中的 ${sceneCount.get(modal.scene.id) ?? 0} 条提示词和全部版本都会被永久删除。`}
+          title="移入回收站？"
+          description={`“${modal.scene.name}”及其中的 ${sceneCount.get(modal.scene.id) ?? 0} 条提示词会移入回收站，之后仍可恢复。`}
           onClose={() => setModal(null)}
-          onConfirm={async () => { await deleteScene(modal.scene.id); setModal(null); notify("场景已删除"); }}
+          confirmLabel="移入回收站"
+          onConfirm={async () => {
+            const scene = modal.scene;
+            await moveSceneToTrash(scene.id);
+            setModal(null);
+            notify("场景已移入回收站", { label: "撤销", run: () => void restoreScene(scene.id) });
+          }}
         />
       )}
       {modal?.type === "delete-prompt" && (
         <ConfirmDelete
-          title="删除提示词？"
-          description={`“${modal.prompt.title}”及其全部历史版本都会被永久删除。`}
+          title="移入回收站？"
+          description={`“${modal.prompt.title}”会移入回收站，版本历史会完整保留。`}
           onClose={() => setModal(null)}
-          onConfirm={async () => { await deletePrompt(modal.prompt.id); setSelectedPromptId(null); setModal(null); notify("提示词已删除"); }}
+          confirmLabel="移入回收站"
+          onConfirm={async () => {
+            const prompt = modal.prompt;
+            await movePromptToTrash(prompt.id);
+            setSelectedPromptId(null);
+            setModal(null);
+            notify("提示词已移入回收站", { label: "撤销", run: () => void restorePrompt(prompt.id) });
+          }}
         />
       )}
-      {toast && <Toast message={toast} />}
+      {modal?.type === "permanent-scene" && (
+        <ConfirmDelete title="永久删除场景？" description={`“${modal.scene.name}”及其全部提示词和版本将永久删除，无法撤销。`} onClose={() => setModal(null)} confirmLabel="永久删除" onConfirm={async () => { await deleteScene(modal.scene.id); setModal(null); notify("场景已永久删除"); }} />
+      )}
+      {modal?.type === "permanent-prompt" && (
+        <ConfirmDelete title="永久删除提示词？" description={`“${modal.prompt.title}”及其全部历史版本将永久删除，无法撤销。`} onClose={() => setModal(null)} confirmLabel="永久删除" onConfirm={async () => { await deletePrompt(modal.prompt.id); setModal(null); notify("提示词已永久删除"); }} />
+      )}
+      {toast && <Toast toast={toast} />}
     </div>
   );
 }
@@ -477,6 +589,8 @@ function PromptDetail({
   onCancelPreview,
   onRestore,
   onSaveVersion,
+  onCompare,
+  onVariables,
   onToggleFavorite,
   onCopy,
   onDelete,
@@ -497,6 +611,8 @@ function PromptDetail({
   onCancelPreview: () => void;
   onRestore: (version: PromptVersion) => Promise<void>;
   onSaveVersion: () => void;
+  onCompare: () => void;
+  onVariables: () => void;
   onToggleFavorite: () => void;
   onCopy: () => void;
   onDelete: () => void;
@@ -532,6 +648,7 @@ function PromptDetail({
             <div><strong>提示词编辑器</strong><span>{editorContent.length} 字符 · 草稿自动保存</span></div>
             <div>
               <button className="save-version-button" onClick={onSaveVersion}><FloppyDisk size={18} />保存新版本</button>
+              {extractVariables(editorContent).length > 0 && <button onClick={onVariables} aria-label="填充变量" title="填充变量"><BracketsCurly size={19} /></button>}
               <button onClick={onCopy} aria-label="复制内容"><Copy size={19} /></button>
               <button onClick={onFullscreen} aria-label="全屏编辑"><ArrowsOutSimple size={19} /></button>
             </div>
@@ -556,7 +673,7 @@ function PromptDetail({
         </section>
         <aside className="metadata-panel">
           <section className="metadata-section version-section">
-            <h2><ClockCounterClockwise size={20} />版本历史</h2>
+            <h2><ClockCounterClockwise size={20} />版本历史<button className="section-action" onClick={onCompare}><ArrowsLeftRight size={16} />对比</button></h2>
             <div className="version-list">
               {versions.map((version) => {
                 const current = version.number === prompt.currentVersion && !previewVersionId;
@@ -708,6 +825,60 @@ function VersionForm({ prompt, content, onClose, onSaved }: { prompt: PromptItem
   );
 }
 
+function VersionCompare({ versions, onClose }: { versions: PromptVersion[]; onClose: () => void }) {
+  const [baseId, setBaseId] = useState(versions.at(-2)?.id ?? versions[0]?.id ?? "");
+  const [targetId, setTargetId] = useState(versions.at(-1)?.id ?? versions[0]?.id ?? "");
+  const base = versions.find((version) => version.id === baseId);
+  const target = versions.find((version) => version.id === targetId);
+  const changes = useMemo(() => diffLines(base?.content ?? "", target?.content ?? ""), [base?.content, target?.content]);
+
+  return (
+    <Modal title="版本差异对比" onClose={onClose} wide>
+      <div className="compare-selectors">
+        <label><span>基准版本</span><select value={baseId} onChange={(event) => setBaseId(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.number} · {version.note}</option>)}</select></label>
+        <ArrowsLeftRight size={22} />
+        <label><span>对比版本</span><select value={targetId} onChange={(event) => setTargetId(event.target.value)}>{versions.map((version) => <option key={version.id} value={version.id}>{version.number} · {version.note}</option>)}</select></label>
+      </div>
+      <div className="diff-legend"><span className="removed">删除</span><span className="added">新增</span></div>
+      <pre className="diff-view" aria-label="版本差异">
+        {changes.map((change, index) => <span key={`${index}-${change.value.length}`} className={change.added ? "added" : change.removed ? "removed" : "unchanged"}>{change.value}</span>)}
+      </pre>
+      <div className="modal-actions"><button className="primary-button" onClick={onClose}>完成</button></div>
+    </Modal>
+  );
+}
+
+function VariablePreview({ prompt, content, onClose, onCopied }: { prompt: PromptItem; content: string; onClose: () => void; onCopied: () => void }) {
+  const variables = useMemo(() => extractVariables(content), [content]);
+  const [values, setValues] = useState<Record<string, string>>(prompt.variableValues ?? {});
+  const rendered = useMemo(() => renderTemplate(content, values), [content, values]);
+
+  const updateValue = (name: string, value: string) => {
+    const next = { ...values, [name]: value };
+    setValues(next);
+    void db.prompts.update(prompt.id, { variableValues: next });
+  };
+
+  const copyRendered = async () => {
+    await navigator.clipboard.writeText(rendered);
+    await db.prompts.update(prompt.id, { lastUsedAt: new Date().toISOString(), variableValues: values });
+    onCopied();
+  };
+
+  return (
+    <Modal title="填充变量并预览" onClose={onClose} wide>
+      <div className="variable-layout">
+        <div className="variable-fields">
+          <p>识别到 {variables.length} 个变量，默认值仅保存在当前浏览器。</p>
+          {variables.map((name) => <label key={name}><span>{`{{${name}}}`}</span><input value={values[name] ?? ""} onChange={(event) => updateValue(name, event.target.value)} placeholder={`填写 ${name}`} /></label>)}
+        </div>
+        <div className="render-preview"><span>渲染结果</span><pre>{rendered}</pre></div>
+      </div>
+      <div className="modal-actions"><button className="secondary-button" onClick={onClose}>关闭</button><button className="primary-button" onClick={() => void copyRendered()}><Copy size={18} />复制渲染结果</button></div>
+    </Modal>
+  );
+}
+
 function ImportPreview({ backup, onClose, onImported }: { backup: PromptBackup; onClose: () => void; onImported: () => void }) {
   const [mode, setMode] = useState<ImportMode>("merge");
   const submit = async () => {
@@ -735,11 +906,11 @@ function ImportPreview({ backup, onClose, onImported }: { backup: PromptBackup; 
   );
 }
 
-function ConfirmDelete({ title, description, onClose, onConfirm }: { title: string; description: string; onClose: () => void; onConfirm: () => Promise<void> }) {
+function ConfirmDelete({ title, description, onClose, onConfirm, confirmLabel = "确认删除" }: { title: string; description: string; onClose: () => void; onConfirm: () => Promise<void>; confirmLabel?: string }) {
   return (
     <Modal title={title} onClose={onClose}>
       <div className="delete-message"><span><WarningCircle size={25} weight="fill" /></span><p>{description}</p></div>
-      <div className="modal-actions"><button className="secondary-button" onClick={onClose}>取消</button><button className="danger-button" onClick={() => void onConfirm()}>确认删除</button></div>
+      <div className="modal-actions"><button className="secondary-button" onClick={onClose}>取消</button><button className="danger-button" onClick={() => void onConfirm()}>{confirmLabel}</button></div>
     </Modal>
   );
 }

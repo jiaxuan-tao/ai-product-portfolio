@@ -23,6 +23,12 @@ export const textSnippet = (text: string, length = 180) => {
   return normalized.length > length ? `${normalized.slice(0, length)}…` : normalized;
 };
 
+export const extractVariables = (content: string) =>
+  [...new Set([...content.matchAll(/{{\s*([\w.-]+)\s*}}/g)].map((match) => match[1]))];
+
+export const renderTemplate = (content: string, values: Record<string, string>) =>
+  content.replace(/{{\s*([\w.-]+)\s*}}/g, (placeholder, name: string) => values[name]?.trim() || placeholder);
+
 const isString = (value: unknown): value is string => typeof value === "string";
 
 export function normalizeBackup(value: unknown): PromptBackup {
@@ -34,12 +40,18 @@ export function normalizeBackup(value: unknown): PromptBackup {
 
   const scenes = source.scenes.filter(
     (scene): scene is Scene => Boolean(scene && isString(scene.id) && isString(scene.name)),
-  );
+  ).map((scene) => ({ ...scene, deletedAt: scene.deletedAt ?? null }));
   const sceneIds = new Set(scenes.map((scene) => scene.id));
   const prompts = source.prompts.filter(
     (prompt): prompt is PromptItem =>
       Boolean(prompt && isString(prompt.id) && isString(prompt.sceneId) && sceneIds.has(prompt.sceneId)),
-  );
+  ).map((prompt) => ({
+    ...prompt,
+    variableValues: prompt.variableValues ?? {},
+    lastUsedAt: prompt.lastUsedAt ?? null,
+    deletedAt: prompt.deletedAt ?? null,
+    deletedWithSceneId: prompt.deletedWithSceneId ?? null,
+  }));
   const promptIds = new Set(prompts.map((prompt) => prompt.id));
   const versions = source.versions.filter(
     (version): version is PromptVersion =>
@@ -49,7 +61,7 @@ export function normalizeBackup(value: unknown): PromptBackup {
   if (!scenes.length && !prompts.length) throw new Error("备份中没有可导入的数据");
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: isString(source.exportedAt) ? source.exportedAt : new Date().toISOString(),
     app: "Prompt Manager",
     scenes,

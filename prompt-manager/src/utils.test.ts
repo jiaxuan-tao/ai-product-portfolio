@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { nextVersion, normalizeBackup, textSnippet } from "./utils";
+import { extractVariables, nextVersion, normalizeBackup, renderTemplate, textSnippet } from "./utils";
 
 describe("Prompt Manager 数据工具", () => {
   it("递增补丁版本号", () => {
@@ -25,5 +25,17 @@ describe("Prompt Manager 数据工具", () => {
     });
     expect(backup.prompts).toHaveLength(1);
     expect(backup.versions).toHaveLength(1);
+    expect(backup.schemaVersion).toBe(2);
+    expect(backup.prompts[0].variableValues).toEqual({});
+  });
+
+  it("提取去重后的模板变量", () => {
+    expect(extractVariables("为 {{ audience }} 写 {{tone}} 文案，再检查 {{audience}}"))
+      .toEqual(["audience", "tone"]);
+  });
+
+  it("渲染已有变量并保留未填写占位符", () => {
+    expect(renderTemplate("面向 {{audience}}，采用 {{tone}}", { audience: "产品经理", tone: "" }))
+      .toBe("面向 产品经理，采用 {{tone}}");
   });
 });
