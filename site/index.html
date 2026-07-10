@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Jiaxuan Tao 的 AI 产品实践作品集" />
+    <title>AI Product Portfolio · Jiaxuan Tao</title>
+    <style>
+      :root {
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+        color: #1c2030;
+        background: #f5f6fa;
+      }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; }
+      header { padding: 76px max(24px, calc((100vw - 1180px) / 2)) 46px; background: #fff; border-bottom: 1px solid #e2e4ec; }
+      .eyebrow { margin: 0 0 12px; color: #6656e8; font-size: 13px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(36px, 5vw, 62px); letter-spacing: -2.5px; }
+      .intro { max-width: 720px; margin: 20px 0 0; color: #6c7183; font-size: 17px; line-height: 1.8; }
+      main { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 48px 0 80px; }
+      .section-title { display: flex; align-items: end; justify-content: space-between; margin-bottom: 22px; }
+      .section-title h2 { margin: 0; font-size: 24px; }
+      .section-title span { color: #8a8fa0; font-size: 13px; }
+      .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+      article { overflow: hidden; border: 1px solid #dde0e9; border-radius: 18px; background: #fff; box-shadow: 0 10px 30px rgba(40, 43, 70, .06); }
+      article img { width: 100%; aspect-ratio: 16 / 9; display: block; object-fit: cover; object-position: top; border-bottom: 1px solid #e4e6ee; background: #f2f3f8; }
+      .card-body { padding: 24px; }
+      .number { color: #6656e8; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+      article h3 { margin: 9px 0 10px; font-size: 22px; }
+      article p { min-height: 54px; margin: 0; color: #6c7183; font-size: 14px; line-height: 1.7; }
+      .actions { display: flex; gap: 10px; margin-top: 20px; }
+      .actions a { padding: 10px 14px; border: 1px solid #d9dce7; border-radius: 9px; color: #4f5466; font-size: 13px; font-weight: 600; text-decoration: none; }
+      .actions a:first-child { color: #fff; border-color: #6656e8; background: #6656e8; }
+      footer { padding: 30px 24px; color: #8a8fa0; text-align: center; font-size: 12px; }
+      @media (max-width: 760px) { .grid { grid-template-columns: 1fr; } header { padding-top: 52px; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="eyebrow">Jiaxuan Tao · AI Product Practice</p>
+      <h1>AI Product Portfolio</h1>
+      <p class="intro">记录从产品定位、需求拆解与 Prompt 设计，到可运行产品和持续迭代的完整实践。</p>
+    </header>
+    <main>
+      <div class="section-title"><h2>Projects</h2><span>持续更新</span></div>
+      <section class="grid">
+        <article>
+          <img src="assets/vibe-coding-prompt-library.png" alt="Vibe Coding 提示词资料库界面" />
+          <div class="card-body">
+            <span class="number">PROJECT 01</span>
+            <h3>Vibe Coding 提示词资料库</h3>
+            <p>面向 Vibe Coding 工作流的本地化提示词模板库，沉淀 PRD、Codex、UI、Debug 与项目文档指令。</p>
+            <div class="actions"><a href="vibe-coding-prompt-library/">在线体验</a><a href="https://github.com/jiaxuan-tao/ai-product-portfolio/tree/main/vibe-coding-prompt-library">查看源码</a></div>
+          </div>
+        </article>
+        <article>
+          <img src="assets/prompt-manager.png" alt="Prompt Manager 场景与提示词管理界面" />
+          <div class="card-body">
+            <span class="number">PROJECT 02</span>
+            <h3>Prompt Manager</h3>
+            <p>纯本地提示词资产库，以场景、提示词和版本三层结构管理内容，并支持 JSON 导入导出。</p>
+            <div class="actions"><a href="prompt-manager/">在线体验</a><a href="https://github.com/jiaxuan-tao/ai-product-portfolio/tree/main/prompt-manager">查看源码</a></div>
+          </div>
+        </article>
+      </section>
+    </main>
+    <footer>© 2026 Jiaxuan Tao · Built through product practice and Vibe Coding</footer>
+  </body>
+</html>

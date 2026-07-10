@@ -10,15 +10,23 @@
 
 ## Projects
 
-- Vibe Coding 提示词资料库
-  面向 Vibe Coding 工作流的本地化提示词管理工具，用于整理和复用 PRD、Codex 指令、UI 修改、Debug 和项目文档提示词。
+- [Vibe Coding 提示词资料库](vibe-coding-prompt-library/README.md)  
+  面向 Vibe Coding 工作流的本地化提示词模板库，用于整理和复用 PRD、Codex 指令、UI 修改、Debug 和项目文档提示词。  
+  [在线体验](https://jiaxuan-tao.github.io/ai-product-portfolio/vibe-coding-prompt-library/)
+
+- [Prompt Manager](prompt-manager/README.md)  
+  纯本地、离线可用的提示词资产管理工具，支持场景、提示词、版本、标签和 JSON 数据流转。  
+  [在线体验](https://jiaxuan-tao.github.io/ai-product-portfolio/prompt-manager/)
 
 ---
 
 ## Repository Structure｜仓库结构 📂
 
+- 根目录项目文件夹
+  每个可独立体验的 AI 产品使用一个同级文件夹，例如 `vibe-coding-prompt-library/` 和 `prompt-manager/`。
+
 - `projects/`
-  用于存放具体 AI 产品项目。每个项目会单独建立一个文件夹。
+  用于维护项目目录说明和后续归档信息。
 
 - `templates/`
   用于存放项目文档模板，包括 README、PRD、用户流程、产品结构、Prompt 和迭代记录模板。

@@ -2,8 +2,12 @@
 
 这里用于存放具体的 AI 产品实践项目。
 
-当前阶段暂不预设项目文件夹。
-后续每个项目会单独建立一个文件夹，并按照统一模板整理产品文档、Prompt、流程图和迭代记录。
+项目代码放在仓库根目录下的同级文件夹中，并按照统一模板整理产品文档、Prompt、流程图和迭代记录。
+
+当前项目：
+
+- [`vibe-coding-prompt-library/`](../vibe-coding-prompt-library/README.md)
+- [`prompt-manager/`](../prompt-manager/README.md)
 
 ## Project Structure｜单个项目结构
 

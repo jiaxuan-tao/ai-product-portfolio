@@ -1,0 +1,65 @@
+name: Deploy AI Product Portfolio
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: prompt-manager/package-lock.json
+      - name: Install Prompt Manager
+        working-directory: prompt-manager
+        run: npm ci
+      - name: Type check
+        working-directory: prompt-manager
+        run: npx tsc --noEmit
+      - name: Test
+        working-directory: prompt-manager
+        run: npm test
+      - name: Build Prompt Manager
+        working-directory: prompt-manager
+        run: npm run build
+      - name: Assemble portfolio site
+        run: |
+          mkdir -p _site/assets _site/prompt-manager _site/vibe-coding-prompt-library
+          cp site/index.html _site/index.html
+          cp prompt-manager/docs/screenshots/home.png _site/assets/prompt-manager.png
+          cp vibe-coding-prompt-library/assets/vibe-coding-prompt-library-preview.png _site/assets/vibe-coding-prompt-library.png
+          cp -R prompt-manager/dist/. _site/prompt-manager/
+          cp -R vibe-coding-prompt-library/app/. _site/vibe-coding-prompt-library/
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
