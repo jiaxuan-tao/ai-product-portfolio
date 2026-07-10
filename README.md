@@ -8,6 +8,13 @@
 
 ---
 
+## Projects
+
+- Vibe Coding Prompt Library
+  A lightweight local-first prompt library for organizing reusable Vibe Coding prompts and Codex instructions.
+
+---
+
 ## Repository Structure｜仓库结构 📂
 
 - `projects/`
