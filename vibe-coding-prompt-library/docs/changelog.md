@@ -1,5 +1,26 @@
 # Changelog｜Vibe Coding 提示词资料库
 
+## v0.1.2｜本地数据迁移
+
+### Added
+
+- Added JSON export with `schemaVersion: 1` and export timestamp metadata.
+- Added JSON import that merges valid prompts into the current local library.
+- Added duplicate-ID detection and invalid-record skipping during import.
+- Added v0.1.2 iteration documentation and README instructions for backup and restore.
+
+### Changed
+
+- Clarified that import and export only operate on local browser data and do not upload prompts.
+
+### Not Included
+
+- No cloud sync.
+- No account or login.
+- No backend service.
+- No AI API integration.
+- No tags, favorites, or custom category management yet.
+
 ## v0.1.1｜中文本地化版本
 
 ### 更新说明

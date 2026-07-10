@@ -204,6 +204,19 @@
       gap: 8px;
     }
 
+    .backup-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .backup-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
     .search-row {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -476,6 +489,12 @@
           <nav class="category-list" id="categoryList" aria-label="提示词分类"></nav>
           <div class="library-actions">
             <button class="button" id="newPromptButton" type="button">新建提示词</button>
+            <div class="backup-actions">
+              <button class="button" id="exportButton" type="button">导出 JSON</button>
+              <button class="button" id="importButton" type="button">导入 JSON</button>
+            </div>
+            <input id="importInput" type="file" accept="application/json,.json" hidden>
+            <p class="backup-note">导入和导出仅处理当前浏览器中的本地数据，不会上传到网络。</p>
             <button class="button danger" id="resetButton" type="button">恢复默认模板</button>
           </div>
         </div>
@@ -543,6 +562,8 @@
     // 保留 promptcat 的单文件、本地优先思路，并聚焦 Vibe Coding 提示词模板。
     const STORAGE_KEY = "vibe-coding-prompt-library:v0.1.0";
     const LOCALIZATION_KEY = "vibe-coding-prompt-library:zh-CN-v0.1.1";
+    const EXPORT_SCHEMA_VERSION = 1;
+    const EXPORT_FILE_PREFIX = "vibe-coding-prompt-library-backup";
     const ALL_CATEGORY = "全部";
     const LEGACY_CATEGORY_MAP = {
       "PRD Prompts": "PRD 提示词",
@@ -787,6 +808,9 @@
       searchInput: document.getElementById("searchInput"),
       clearSearchButton: document.getElementById("clearSearchButton"),
       newPromptButton: document.getElementById("newPromptButton"),
+      exportButton: document.getElementById("exportButton"),
+      importButton: document.getElementById("importButton"),
+      importInput: document.getElementById("importInput"),
       resetButton: document.getElementById("resetButton"),
       promptForm: document.getElementById("promptForm"),
       titleInput: document.getElementById("titleInput"),
@@ -870,6 +894,95 @@
         state.storageAvailable = false;
         return false;
       }
+    }
+
+    function createExportPayload() {
+      return {
+        schemaVersion: EXPORT_SCHEMA_VERSION,
+        exportedAt: new Date().toISOString(),
+        prompts: state.prompts
+      };
+    }
+
+    function exportPrompts() {
+      const payload = JSON.stringify(createExportPayload(), null, 2);
+      const blob = new Blob([payload], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      const date = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `${EXPORT_FILE_PREFIX}-${date}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      showEditorStatus("已导出本地提示词备份。", "success");
+    }
+
+    async function importPrompts(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        const payload = JSON.parse(await file.text());
+        const result = mergeImportedPrompts(payload);
+        if (!result.imported) {
+          showEditorStatus(`没有导入新提示词，跳过 ${result.duplicates} 个重复项和 ${result.invalid} 个无效项。`, "error");
+          return;
+        }
+        const saved = savePrompts();
+        renderAll();
+        const storageNote = saved ? "" : " 浏览器本地存储不可用，内容仅保留在当前页面。";
+        showEditorStatus(`已导入 ${result.imported} 个，跳过 ${result.duplicates} 个重复项和 ${result.invalid} 个无效项。${storageNote}`, "success");
+      } catch (error) {
+        showEditorStatus("导入失败：请选择符合 v1 格式的 JSON 备份文件。", "error");
+      } finally {
+        event.target.value = "";
+      }
+    }
+
+    function mergeImportedPrompts(payload) {
+      if (!payload || payload.schemaVersion !== EXPORT_SCHEMA_VERSION || !Array.isArray(payload.prompts)) {
+        throw new Error("Invalid backup payload");
+      }
+      const knownIds = new Set(state.prompts.map((prompt) => prompt.id));
+      const additions = [];
+      let duplicates = 0;
+      let invalid = 0;
+      payload.prompts.forEach((prompt) => {
+        const normalized = normalizeImportedPrompt(prompt);
+        if (!normalized) {
+          invalid += 1;
+          return;
+        }
+        if (knownIds.has(normalized.id)) {
+          duplicates += 1;
+          return;
+        }
+        knownIds.add(normalized.id);
+        additions.push(normalized);
+      });
+      if (additions.length) state.prompts.unshift(...additions);
+      return { imported: additions.length, duplicates, invalid };
+    }
+
+    function normalizeImportedPrompt(prompt) {
+      if (!prompt || typeof prompt !== "object") return null;
+      const id = typeof prompt.id === "string" ? prompt.id.trim() : "";
+      const title = typeof prompt.title === "string" ? prompt.title.trim() : "";
+      const category = typeof prompt.category === "string" ? prompt.category.trim() : "";
+      const body = typeof prompt.body === "string" ? prompt.body.trim() : "";
+      if (!id || !title || !category || !body) return null;
+      const now = new Date().toISOString();
+      return {
+        id,
+        title,
+        category: LEGACY_CATEGORY_MAP[category] || category,
+        description: typeof prompt.description === "string" ? prompt.description.trim() : "",
+        body,
+        isDefault: Boolean(prompt.isDefault),
+        createdAt: typeof prompt.createdAt === "string" ? prompt.createdAt : now,
+        updatedAt: typeof prompt.updatedAt === "string" ? prompt.updatedAt : now
+      };
     }
 
     function getCategories() {
@@ -1158,6 +1271,9 @@
     });
 
     nodes.newPromptButton.addEventListener("click", startNewPrompt);
+    nodes.exportButton.addEventListener("click", exportPrompts);
+    nodes.importButton.addEventListener("click", () => nodes.importInput.click());
+    nodes.importInput.addEventListener("change", importPrompts);
     nodes.resetButton.addEventListener("click", resetDefaults);
     nodes.promptForm.addEventListener("submit", saveCurrentPrompt);
     nodes.copyButton.addEventListener("click", copyBody);
