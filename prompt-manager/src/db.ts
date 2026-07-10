@@ -19,6 +19,21 @@ class PromptManagerDatabase extends Dexie {
       prompts: "id, sceneId, title, isFavorite, updatedAt",
       versions: "id, promptId, number, createdAt",
     });
+    this.version(3).stores({
+      scenes: "id, name, createdAt, updatedAt, deletedAt",
+      prompts: "id, sceneId, title, isFavorite, updatedAt, lastUsedAt, deletedAt",
+      versions: "id, promptId, number, createdAt",
+    }).upgrade(async (transaction) => {
+      await transaction.table("scenes").toCollection().modify((scene: Scene) => {
+        scene.deletedAt = null;
+      });
+      await transaction.table("prompts").toCollection().modify((prompt: PromptItem) => {
+        prompt.variableValues = {};
+        prompt.lastUsedAt = null;
+        prompt.deletedAt = null;
+        prompt.deletedWithSceneId = null;
+      });
+    });
     this.on("populate", async () => {
       await this.scenes.bulkAdd(seedScenes);
       await this.prompts.bulkAdd(seedPrompts);
@@ -45,7 +60,7 @@ export async function createBackup(): Promise<PromptBackup> {
     db.versions.toArray(),
   ]);
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     exportedAt: new Date().toISOString(),
     app: "Prompt Manager",
     scenes,
@@ -78,5 +93,43 @@ export async function deleteScene(sceneId: string) {
     await db.versions.where("promptId").anyOf(promptIds).delete();
     await db.prompts.bulkDelete(promptIds);
     await db.scenes.delete(sceneId);
+  });
+}
+
+export async function movePromptToTrash(promptId: string) {
+  await db.prompts.update(promptId, {
+    deletedAt: new Date().toISOString(),
+    deletedWithSceneId: null,
+  });
+}
+
+export async function restorePrompt(promptId: string) {
+  await db.transaction("rw", db.scenes, db.prompts, async () => {
+    const prompt = await db.prompts.get(promptId);
+    if (!prompt) return;
+    await db.scenes.update(prompt.sceneId, { deletedAt: null });
+    await db.prompts.update(promptId, { deletedAt: null, deletedWithSceneId: null });
+  });
+}
+
+export async function moveSceneToTrash(sceneId: string) {
+  const now = new Date().toISOString();
+  await db.transaction("rw", db.scenes, db.prompts, async () => {
+    await db.scenes.update(sceneId, { deletedAt: now });
+    await db.prompts.where("sceneId").equals(sceneId).filter((prompt) => !prompt.deletedAt).modify({
+      deletedAt: now,
+      deletedWithSceneId: sceneId,
+    });
+  });
+}
+
+export async function restoreScene(sceneId: string) {
+  await db.transaction("rw", db.scenes, db.prompts, async () => {
+    await db.scenes.update(sceneId, { deletedAt: null });
+    await db.prompts
+      .where("sceneId")
+      .equals(sceneId)
+      .filter((prompt) => prompt.deletedWithSceneId === sceneId)
+      .modify({ deletedAt: null, deletedWithSceneId: null });
   });
 }
