@@ -1,0 +1,62 @@
+name: Release Quota Float Native
+
+on:
+  push:
+    tags:
+      - "quota-float-native-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            artifact-name: quota-float-native-windows-unsigned
+            archive-name: quota-float-native-windows-unsigned.zip
+            build-command: npm run tauri -- build
+            artifact-path: src-tauri/target/release/bundle/*
+          - os: macos-latest
+            artifact-name: quota-float-native-macos-universal-unsigned
+            archive-name: quota-float-native-macos-universal-unsigned.zip
+            build-command: npm run tauri -- build --target universal-apple-darwin
+            artifact-path: src-tauri/target/universal-apple-darwin/release/bundle/*
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: quota-float-native
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: quota-float-native/package-lock.json
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install macOS universal targets
+        if: runner.os == 'macOS'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: quota-float-native/src-tauri
+      - run: npm ci
+      - run: npm test
+      - run: cargo test --manifest-path src-tauri/Cargo.toml
+      - run: ${{ matrix.build-command }}
+      - name: Archive bundle
+        shell: pwsh
+        run: Compress-Archive -Path "${{ matrix.artifact-path }}" -DestinationPath "${{ matrix.archive-name }}" -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact-name }}
+          path: quota-float-native/${{ matrix.archive-name }}
+          if-no-files-found: error
+          retention-days: 90
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: quota-float-native/${{ matrix.archive-name }}
+          draft: false
+          generate_release_notes: true

@@ -1,0 +1,27 @@
+[package]
+name = "quota-float-native"
+version = "0.1.2"
+description = "macOS 原生风格的 Codex 额度悬浮窗"
+authors = ["Quota Float contributors", "Jiaxuan Tao"]
+license = "MIT"
+edition = "2021"
+
+[lib]
+name = "quota_float_native_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "6"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "system-proxy"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = ["tray-icon", "macos-private-api"] }
+tauri-plugin-autostart = "2"
+tauri-plugin-single-instance = "2"
+tauri-plugin-window-state = "2"
+tokio = { version = "1", features = ["macros", "sync"] }
