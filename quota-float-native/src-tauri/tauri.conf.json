@@ -1,0 +1,45 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Quota Float Native",
+  "version": "0.1.2",
+  "identifier": "io.github.jiaxuanta.quotafloatnative",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "widget",
+        "title": "Quota Float Native",
+        "width": 100,
+        "height": 100,
+        "minWidth": 80,
+        "minHeight": 80,
+        "maxWidth": 360,
+        "maxHeight": 360,
+        "resizable": true,
+        "decorations": false,
+        "transparent": true,
+        "backgroundColor": "#00000000",
+        "alwaysOnTop": true,
+        "skipTaskbar": true,
+        "shadow": false,
+        "visible": true
+      }
+    ],
+    "security": { "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self'; img-src 'self' data:" }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "category": "Utility",
+    "shortDescription": "macOS 原生风格的 Codex 额度悬浮窗",
+    "longDescription": "轻量显示 Codex 额度，采用 macOS 原生视觉语言。",
+    "copyright": "Copyright Quota Float contributors and Jiaxuan Tao",
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.icns", "icons/icon.ico"]
+  }
+}

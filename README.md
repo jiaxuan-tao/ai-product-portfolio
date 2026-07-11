@@ -18,12 +18,16 @@
   纯本地、离线可用的提示词资产管理工具，支持场景、提示词、版本、标签和 JSON 数据流转。  
   [在线体验](https://jiaxuan-tao.github.io/ai-product-portfolio/prompt-manager/)
 
+- [Quota Float Native](quota-float-native/README.md)
+  macOS 原生风格的 Codex 额度悬浮窗，记录从开源基础能力、界面重构到真实桌面环境修复的 Vibe Coding 实践。
+  [下载 macOS 版](https://github.com/jiaxuan-tao/ai-product-portfolio/releases/download/quota-float-native-v0.1.2/quota-float-native-macos-universal-unsigned.zip)
+
 ---
 
 ## Repository Structure｜仓库结构 📂
 
 - 根目录项目文件夹
-  每个可独立体验的 AI 产品使用一个同级文件夹，例如 `vibe-coding-prompt-library/` 和 `prompt-manager/`。
+  每个可独立体验的 AI 产品使用一个同级文件夹，例如 `vibe-coding-prompt-library/`、`prompt-manager/` 和 `quota-float-native/`。
 
 - `projects/`
   用于维护项目目录说明和后续归档信息。
