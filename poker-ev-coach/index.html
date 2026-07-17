@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="输入德州扑克手牌、公共牌与底池数据，模拟胜率并比较底池赔率。"
+    />
+    <link rel="icon" href="data:," />
+    <title>Poker EV Coach｜牌桌复盘</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="product-name">Poker EV Coach</p>
+        <h1>牌桌复盘</h1>
+      </div>
+      <a
+        class="author-link"
+        href="https://github.com/jiaxuan-tao"
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="访问 Jiaxuan Tao 的 GitHub 主页"
+      >作者 · Jiaxuan Tao</a>
+    </header>
+
+    <main class="app-shell">
+      <section class="workspace" aria-labelledby="workspace-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">Hand setup</p>
+            <h2 id="workspace-title">还原牌局</h2>
+          </div>
+          <p>底牌 · 公共牌 · 行动成本</p>
+        </div>
+
+        <form id="hand-form" novalidate>
+          <fieldset class="card-fieldset">
+            <legend>你的底牌</legend>
+            <div class="card-row card-row--hero" id="hero-cards">
+              <button
+                class="card-slot"
+                type="button"
+                data-zone="hero"
+                data-index="0"
+                aria-label="选择第一张底牌"
+              ></button>
+              <button
+                class="card-slot"
+                type="button"
+                data-zone="hero"
+                data-index="1"
+                aria-label="选择第二张底牌"
+              ></button>
+            </div>
+          </fieldset>
+
+          <fieldset class="card-fieldset">
+            <legend>公共牌 <span>可选</span></legend>
+            <div class="card-row card-row--board" id="board-cards">
+              <button
+                class="card-slot"
+                type="button"
+                data-zone="board"
+                data-index="0"
+                aria-label="选择第一张公共牌"
+              ></button>
+              <button
+                class="card-slot"
+                type="button"
+                data-zone="board"
+                data-index="1"
+                aria-label="选择第二张公共牌"
+              ></button>
+              <button
+                class="card-slot"
+                type="button"
+                data-zone="board"
+                data-index="2"
+                aria-label="选择第三张公共牌"
+              ></button>
+              <button
+                class="card-slot"
+                type="button"
+                data-zone="board"
+                data-index="3"
+                aria-label="选择第四张公共牌"
+              ></button>
+              <button
+                class="card-slot"
+                type="button"
+                data-zone="board"
+                data-index="4"
+                aria-label="选择第五张公共牌"
+              ></button>
+            </div>
+          </fieldset>
+
+          <section class="bet-settings" aria-labelledby="bet-settings-title">
+            <div class="blind-toolbar">
+              <div>
+                <p class="control-label" id="bet-settings-title">盲注级别</p>
+                <p class="control-hint">小盲 / 大盲，用于换算 BB 快捷金额</p>
+              </div>
+              <label class="blind-select" for="blind-level">
+                <span class="sr-only">选择盲注级别</span>
+                <select id="blind-level" name="blind-level">
+                  <option value="1/2" data-small-blind="1" data-big-blind="2">1 / 2</option>
+                  <option value="2/5" data-small-blind="2" data-big-blind="5">2 / 5</option>
+                  <option value="5/10" data-small-blind="5" data-big-blind="10" selected>
+                    5 / 10
+                  </option>
+                  <option value="10/20" data-small-blind="10" data-big-blind="20">
+                    10 / 20
+                  </option>
+                  <option value="25/50" data-small-blind="25" data-big-blind="50">25 / 50</option>
+                  <option value="50/100" data-small-blind="50" data-big-blind="100">50 / 100</option>
+                  <option value="100/200" data-small-blind="100" data-big-blind="200">100 / 200</option>
+                </select>
+                <span aria-hidden="true">筹码</span>
+              </label>
+            </div>
+
+            <div class="input-grid">
+              <div class="input-field">
+                <label for="pot">当前底池</label>
+                <div class="number-stepper">
+                  <button
+                    class="step-button"
+                    type="button"
+                    data-step-target="pot"
+                    data-step="-1"
+                    aria-label="当前底池减少 1 筹码"
+                    title="减少 1"
+                  >
+                    −
+                  </button>
+                  <span class="number-input">
+                    <input
+                      id="pot"
+                      name="pot"
+                      type="number"
+                      min="0"
+                      step="1"
+                      value="100"
+                      inputmode="numeric"
+                      required
+                    />
+                    <span aria-hidden="true">筹码</span>
+                  </span>
+                  <button
+                    class="step-button"
+                    type="button"
+                    data-step-target="pot"
+                    data-step="1"
+                    aria-label="当前底池增加 1 筹码"
+                    title="增加 1"
+                  >
+                    +
+                  </button>
+                </div>
+                <div class="amount-presets" aria-label="当前底池快捷金额">
+                  <button type="button" data-amount-target="pot" data-bb-multiplier="2">
+                    <span>2 BB</span><small data-preset-value></small>
+                  </button>
+                  <button type="button" data-amount-target="pot" data-bb-multiplier="5">
+                    <span>5 BB</span><small data-preset-value></small>
+                  </button>
+                  <button type="button" data-amount-target="pot" data-bb-multiplier="10">
+                    <span>10 BB</span><small data-preset-value></small>
+                  </button>
+                  <button type="button" data-amount-target="pot" data-bb-multiplier="20">
+                    <span>20 BB</span><small data-preset-value></small>
+                  </button>
+                </div>
+              </div>
+
+              <div class="input-field">
+                <label for="call">跟注金额</label>
+                <div class="number-stepper">
+                  <button
+                    class="step-button"
+                    type="button"
+                    data-step-target="call"
+                    data-step="-1"
+                    aria-label="跟注金额减少 1 筹码"
+                    title="减少 1"
+                  >
+                    −
+                  </button>
+                  <span class="number-input">
+                    <input
+                      id="call"
+                      name="call"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value="20"
+                      inputmode="numeric"
+                      required
+                    />
+                    <span aria-hidden="true">筹码</span>
+                  </span>
+                  <button
+                    class="step-button"
+                    type="button"
+                    data-step-target="call"
+                    data-step="1"
+                    aria-label="跟注金额增加 1 筹码"
+                    title="增加 1"
+                  >
+                    +
+                  </button>
+                </div>
+                <div class="amount-presets" aria-label="跟注金额快捷预设">
+                  <button type="button" data-amount-target="call" data-bb-multiplier="1">
+                    <span>1 BB</span><small data-preset-value></small>
+                  </button>
+                  <button type="button" data-amount-target="call" data-bb-multiplier="2">
+                    <span>2 BB</span><small data-preset-value></small>
+                  </button>
+                  <button type="button" data-amount-target="call" data-bb-multiplier="3">
+                    <span>3 BB</span><small data-preset-value></small>
+                  </button>
+                  <button type="button" data-amount-target="call" data-bb-multiplier="5">
+                    <span>5 BB</span><small data-preset-value></small>
+                  </button>
+                </div>
+              </div>
+
+              <div class="input-field input-field--opponents">
+                <label for="opponents">对手人数</label>
+                <span class="number-input">
+                  <input
+                    id="opponents"
+                    name="opponents"
+                    type="number"
+                    min="1"
+                    max="8"
+                    step="1"
+                    value="1"
+                    inputmode="numeric"
+                    required
+                  />
+                  <span aria-hidden="true">人</span>
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <p class="form-error" id="form-error" role="alert" hidden></p>
+
+          <div class="actions">
+            <button class="button button--secondary" id="example-button" type="button">
+              示例牌局
+            </button>
+            <button class="button button--quiet" id="reset-button" type="button">
+              <span aria-hidden="true">↺</span>重置
+            </button>
+            <button class="button button--primary" id="calculate-button" type="submit">
+              <span class="button-label">开始计算</span>
+              <span class="button-loader" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <aside class="results" aria-labelledby="results-title" aria-live="polite">
+        <div class="section-heading section-heading--results">
+          <div>
+            <p class="section-kicker">Decision readout</p>
+            <h2 id="results-title">决策读数</h2>
+          </div>
+          <p id="result-status">等待输入</p>
+        </div>
+
+        <div class="result-empty" id="result-empty">
+          <p>尚无计算结果</p>
+        </div>
+
+        <div class="result-content" id="result-content" hidden>
+          <section class="verdict-block" aria-labelledby="verdict-label">
+            <p id="verdict-label">行动建议</p>
+            <div class="verdict-line">
+              <h3 id="verdict">建议跟注</h3>
+              <span id="edge-summary">优势 +0.0%</span>
+            </div>
+            <p id="verdict-reason"></p>
+          </section>
+
+          <dl class="metrics" aria-label="计算指标">
+            <div>
+              <dt>Equity</dt>
+              <dd id="equity-value">0.0%</dd>
+            </div>
+            <div>
+              <dt>Pot Odds</dt>
+              <dd id="pot-odds-value">0.0%</dd>
+            </div>
+            <div>
+              <dt>Call EV</dt>
+              <dd id="ev-value">0.00</dd>
+            </div>
+            <div>
+              <dt>Edge</dt>
+              <dd id="edge-value">0.0%</dd>
+            </div>
+          </dl>
+
+          <section class="decision-explanation" aria-labelledby="decision-explanation-title">
+            <h3 id="decision-explanation-title">为什么这样建议</h3>
+            <dl class="decision-explanation-list">
+              <div>
+                <dt>成本门槛</dt>
+                <dd id="explanation-cost"></dd>
+              </div>
+              <div>
+                <dt>胜率比较</dt>
+                <dd id="explanation-equity"></dd>
+              </div>
+              <div>
+                <dt>长期结果</dt>
+                <dd id="explanation-ev"></dd>
+              </div>
+            </dl>
+            <p class="decision-explanation-note" id="explanation-note" hidden></p>
+          </section>
+
+          <section class="comparison" aria-labelledby="comparison-title">
+            <div class="comparison-heading">
+              <h3 id="comparison-title">胜率与成本线</h3>
+              <span>0–100%</span>
+            </div>
+            <div
+              class="comparison-track"
+              id="comparison-track"
+              role="img"
+              aria-label="Equity 0%，Pot Odds 0%"
+            >
+              <div class="track-base" aria-hidden="true">
+                <span class="track-segment"></span>
+                <span class="track-marker track-marker--equity"></span>
+                <span class="track-marker track-marker--odds"></span>
+              </div>
+            </div>
+            <div class="track-legend">
+              <span><i class="legend-dot legend-dot--equity"></i>Equity <b id="legend-equity">0.0%</b></span>
+              <span><i class="legend-dot legend-dot--odds"></i>Pot Odds <b id="legend-odds">0.0%</b></span>
+            </div>
+          </section>
+
+          <section class="outcomes" aria-labelledby="outcomes-title">
+            <div class="outcomes-heading">
+              <h3 id="outcomes-title">模拟结果</h3>
+              <span>5,000 hands</span>
+            </div>
+            <dl>
+              <div>
+                <dt>胜</dt>
+                <dd id="wins-value">0</dd>
+              </div>
+              <div>
+                <dt>平</dt>
+                <dd id="ties-value">0</dd>
+              </div>
+              <div>
+                <dt>负</dt>
+                <dd id="losses-value">0</dd>
+              </div>
+            </dl>
+          </section>
+
+          <p class="limitation-note">
+            结果基于随机发牌模拟，未纳入对手范围、位置、下注频率与未来行动，仅用于复盘参考。
+          </p>
+        </div>
+      </aside>
+    </main>
+
+    <dialog class="card-picker" id="card-picker" aria-labelledby="picker-title">
+      <div class="picker-header">
+        <div>
+          <p class="section-kicker">Choose a card</p>
+          <h2 id="picker-title">选择一张牌</h2>
+        </div>
+        <button class="icon-button" id="close-picker" type="button" aria-label="关闭选牌窗口">
+          ×
+        </button>
+      </div>
+      <div class="picker-deck" id="picker-deck"></div>
+    </dialog>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -8,6 +8,7 @@
 
 - [`vibe-coding-prompt-library/`](../vibe-coding-prompt-library/README.md)
 - [`prompt-manager/`](../prompt-manager/README.md)
+- [`poker-ev-coach/`](../poker-ev-coach/README.md)
 - [`quota-float-native/`](../quota-float-native/README.md)
 
 ## Project Structure｜单个项目结构
