@@ -159,7 +159,8 @@ export function createHierarchyCandidates({
     enabledOptionalCuisines,
   });
 
-  if (filteredCandidates.length >= 2 || scopedFoods.length < 2) {
+  const usableCandidateCount = Math.min(2, scopedFoods.length);
+  if (filteredCandidates.length >= usableCandidateCount) {
     return filteredCandidates;
   }
 
@@ -173,7 +174,7 @@ export function createHierarchyCandidates({
     enabledOptionalCuisines,
   });
 
-  if (relaxedCandidates.length >= 2 || scopedFoods.length < 2) {
+  if (relaxedCandidates.length >= usableCandidateCount) {
     return relaxedCandidates;
   }
 

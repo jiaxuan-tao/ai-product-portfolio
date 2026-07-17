@@ -312,6 +312,38 @@ test("dish wheel may repeat a recent result when a small cuisine would otherwise
   assert.ok(dishes.every((food) => food.origin === "中餐" && food.cuisine === "川湘菜"));
 });
 
+test("one-item cuisines relax filters and recent history but preserve explicit blocks", async () => {
+  const picker = await import("../picker.js");
+  const onlyDish = {
+    id: "only-dish",
+    name: "家常拌饭",
+    origin: "中餐",
+    cuisine: "我的自定义",
+    availability: "default",
+    meals: ["午餐"],
+    flavors: ["清淡点"],
+    spends: ["简单吃"],
+  };
+  const base = {
+    foods: [onlyDish],
+    path: ["中餐", "我的自定义"],
+    filters: { meal: "早餐", flavor: "想吃辣", spend: "犒劳自己" },
+    now: 1_000,
+  };
+
+  const relaxed = picker.createHierarchyCandidates({
+    ...base,
+    exclusions: { recentAccepted: ["only-dish"] },
+  });
+  const blocked = picker.createHierarchyCandidates({
+    ...base,
+    exclusions: { blockedUntil: { "only-dish": 2_000 } },
+  });
+
+  assert.deepEqual(relaxed.map((food) => food.id), ["only-dish"]);
+  assert.deepEqual(blocked, []);
+});
+
 test("createCandidatePool returns every eligible food when fewer than eight remain", () => {
   const foods = Array.from({ length: 2 }, (_, index) => ({
     id: `eligible-${index}`,

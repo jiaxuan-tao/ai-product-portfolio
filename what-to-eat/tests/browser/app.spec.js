@@ -119,7 +119,7 @@ test("a one-item custom cuisine remains selectable", async ({ page }) => {
   await page.evaluate(() => {
     localStorage.setItem("what-to-eat.state.v1", JSON.stringify({
       version: 1,
-      filters: { meal: "不限", flavor: "不限", spend: "不限" },
+      filters: { meal: "早餐", flavor: "想吃辣", spend: "犒劳自己" },
       customFoods: [{
         id: "custom-only",
         name: "家常拌饭",
@@ -132,7 +132,7 @@ test("a one-item custom cuisine remains selectable", async ({ page }) => {
       }],
       favorites: [],
       blockedUntil: {},
-      recentAccepted: [],
+      recentAccepted: ["custom-only"],
       enabledOptionalCuisines: [],
       soundEnabled: false,
     }));
@@ -143,7 +143,7 @@ test("a one-item custom cuisine remains selectable", async ({ page }) => {
         id: "single-custom",
         name: "单菜测试",
         mode: "cuisine",
-        filters: { meal: "不限", flavor: "不限", spend: "不限" },
+        filters: { meal: "早餐", flavor: "想吃辣", spend: "犒劳自己" },
         path: ["中餐", "我的自定义"],
       }],
     }));
