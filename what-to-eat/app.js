@@ -309,10 +309,7 @@ function renderCandidates() {
   elements.stageCount.textContent = String(count);
   elements.candidateCount.textContent = String(count);
   const today = new Date();
-  elements.ticketDate.textContent = new Intl.DateTimeFormat("zh-CN", {
-    month: "numeric",
-    day: "numeric",
-  }).format(today);
+  elements.ticketDate.textContent = `${today.getMonth() + 1}月${today.getDate()}日`;
   elements.ticketDate.dateTime = [
     today.getFullYear(),
     String(today.getMonth() + 1).padStart(2, "0"),

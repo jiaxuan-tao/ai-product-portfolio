@@ -130,6 +130,7 @@ test("filter controls use themed listboxes instead of opening native select menu
 test("candidate ticket uses clear date copy, a meaningful stamp, and non-overlapping actions", () => {
   assert.match(html, /<time[^>]*id="ticket-date"/);
   assert.doesNotMatch(html, /NO\.\s*<span id="ticket-number"/);
+  assert.match(app, /getMonth\(\)\s*\+\s*1\}月\$\{today\.getDate\(\)\}日/);
   assert.match(html, /class="ticket-stamp"[^>]*>\s*今日\s*</);
   assert.match(html, /class="candidate-actions"[\s\S]*id="refresh-candidates"[\s\S]*id="save-combination"/);
   assert.match(css, /\.candidate-actions\s*\{[^}]*display:\s*grid/s);
