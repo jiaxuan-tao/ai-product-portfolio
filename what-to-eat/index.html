@@ -31,30 +31,37 @@
         <div class="topbar-actions">
           <button
             id="sound-toggle"
-            class="icon-button"
+            class="tool-button"
             type="button"
             aria-label="关闭音效"
             aria-pressed="true"
             title="关闭音效"
+            data-enabled="true"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M11 5 6 9H3v6h3l5 4V5Z"></path>
-              <path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
-              <path d="M18 6a8.5 8.5 0 0 1 0 12"></path>
+              <g class="sound-on-icon">
+                <path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+                <path d="M18 6a8.5 8.5 0 0 1 0 12"></path>
+              </g>
+              <path class="sound-off-icon" d="m15 9 6 6m0-6-6 6"></path>
             </svg>
+            <span id="sound-state">音效开</span>
           </button>
           <button
             id="open-library"
-            class="icon-button"
+            class="tool-button"
             type="button"
             aria-label="打开我的菜库"
             title="打开我的菜库"
             aria-haspopup="dialog"
+            aria-expanded="false"
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"></path>
               <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"></path>
             </svg>
+            <span id="library-state">菜库</span>
           </button>
         </div>
       </header>
@@ -97,10 +104,10 @@
           <p class="rail-label">选择路径</p>
           <ol id="path-list">
             <li class="is-current">
-              <button type="button" aria-current="step">
+              <div class="path-current" aria-current="step">
                 <span>01</span>
                 全部菜品
-              </button>
+              </div>
             </li>
             <li class="is-pending">
               <span><b>02</b> 菜系类别</span>
@@ -137,10 +144,10 @@
         <section class="candidate-ticket" aria-labelledby="candidate-heading">
           <header>
             <div>
-              <p>NO. <span id="ticket-number">0717</span></p>
-              <h2 id="candidate-heading">今日候选菜单</h2>
+              <p><time id="ticket-date" datetime="">7月18日</time> · 今日候选</p>
+              <h2 id="candidate-heading">候选菜单</h2>
             </div>
-            <span class="ticket-stamp" aria-hidden="true">鲜</span>
+            <span class="ticket-stamp" aria-hidden="true">今日</span>
           </header>
           <ol id="candidate-list">
             <li><span>01</span><b>螺蛳粉</b><small>广西风味</small></li>
@@ -150,15 +157,20 @@
             <li><span>05</span><b>拉面</b><small>面食</small></li>
             <li><span>06</span><b>披萨</b><small>西餐</small></li>
           </ol>
-          <button id="refresh-candidates" class="ticket-action" type="button">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M20 7v5h-5"></path>
-              <path d="M4 17v-5h5"></path>
-              <path d="M6.1 9a7 7 0 0 1 11.2-2L20 12"></path>
-              <path d="m4 12 2.7 5a7 7 0 0 0 11.2-2"></path>
-            </svg>
-            换一批候选
-          </button>
+          <div class="candidate-actions">
+            <button id="refresh-candidates" class="ticket-action" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M20 7v5h-5"></path>
+                <path d="M4 17v-5h5"></path>
+                <path d="M6.1 9a7 7 0 0 1 11.2-2L20 12"></path>
+                <path d="m4 12 2.7 5a7 7 0 0 0 11.2-2"></path>
+              </svg>
+              换一批候选
+            </button>
+            <button id="save-combination" class="ticket-action save-action" type="button">
+              保存组合
+            </button>
+          </div>
         </section>
       </main>
 
@@ -171,7 +183,7 @@
 
     <dialog id="result-ticket" class="result-ticket" aria-labelledby="result-name">
       <div class="ticket-topline">
-        <p>出餐小票 · NO. <span id="result-number">0001</span></p>
+        <p>出餐时间 · <time id="result-time" datetime="">--:--</time></p>
         <button
           id="close-result"
           class="icon-button ink-button"
@@ -185,12 +197,9 @@
         </button>
       </div>
       <figure class="result-visual">
-        <img
-          src="assets/food-poster.jpg"
-          width="1200"
-          height="800"
-          alt="面食、火锅、寿司、水饺、披萨和烤串组成的复古食堂插画"
-        >
+        <canvas id="result-art" width="960" height="640">
+          浏览器不支持 Canvas，无法展示菜品插画。
+        </canvas>
         <figcaption id="result-category">广西风味 · 中餐</figcaption>
       </figure>
       <div class="result-copy">

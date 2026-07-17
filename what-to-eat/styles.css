@@ -919,6 +919,17 @@ dialog::backdrop {
   padding: 8px 10px;
 }
 
+#custom-food-form .select-control {
+  min-height: 44px;
+  border: var(--border);
+  border-radius: 4px;
+  background: var(--paper);
+}
+
+#custom-food-form .select-trigger {
+  min-height: 40px;
+}
+
 .form-submit {
   width: 100%;
   margin-top: 4px;
@@ -1137,5 +1148,701 @@ dialog::backdrop {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* One-screen application layout and refined interaction states */
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  min-height: 0;
+}
+
+.app-shell {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  grid-template-rows: 64px 62px minmax(0, 1fr) 36px;
+}
+
+.topbar {
+  min-height: 0;
+  padding-block: 8px;
+}
+
+.brand-mark {
+  width: 40px;
+}
+
+.mode-control span {
+  min-height: 36px;
+}
+
+.topbar-actions {
+  gap: 8px;
+}
+
+.tool-button {
+  display: inline-grid;
+  min-width: 72px;
+  min-height: 44px;
+  padding: 4px 9px;
+  grid-template-columns: 20px auto;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink-deep);
+  border-color: var(--rice);
+  background: var(--mustard);
+  box-shadow: 3px 3px 0 var(--vermilion);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.tool-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.tool-button .sound-off-icon {
+  display: none;
+}
+
+.tool-button[data-enabled="false"] {
+  color: var(--rice);
+  background: var(--ink-deep);
+  box-shadow: 3px 3px 0 var(--muted);
+}
+
+.tool-button[data-enabled="false"] .sound-on-icon {
+  display: none;
+}
+
+.tool-button[data-enabled="false"] .sound-off-icon {
+  display: block;
+}
+
+.tool-button[aria-expanded="true"] {
+  color: var(--rice);
+  background: var(--vermilion);
+  box-shadow: 3px 3px 0 var(--mustard);
+}
+
+.quick-filters {
+  align-items: center;
+  gap: 14px;
+  padding: 10px clamp(16px, 4vw, 56px) 8px;
+}
+
+.menu-tag {
+  position: relative;
+  min-height: 44px;
+}
+
+.menu-tag > span {
+  min-height: 40px;
+}
+
+.native-select {
+  display: none;
+  position: absolute;
+  width: 1px !important;
+  height: 1px;
+  min-height: 0;
+  padding: 0 !important;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0 !important;
+}
+
+.select-control {
+  position: relative;
+  min-width: 0;
+  align-self: stretch;
+}
+
+.select-trigger {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 10px 0 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-weight: 900;
+  text-align: left;
+}
+
+.select-trigger[aria-expanded="true"] {
+  color: var(--rice);
+  background: var(--vermilion);
+}
+
+.select-chevron {
+  font-size: 1rem;
+  line-height: 1;
+  transition: rotate 160ms ease;
+}
+
+.select-trigger[aria-expanded="true"] .select-chevron {
+  rotate: 180deg;
+}
+
+.select-popover {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 7px);
+  right: -2px;
+  left: -2px;
+  max-height: min(280px, 44dvh);
+  padding: 5px;
+  overflow-y: auto;
+  border: var(--border);
+  border-radius: 3px;
+  background: var(--paper);
+  box-shadow: 5px 5px 0 var(--mustard);
+}
+
+.select-popover[role="listbox"] {
+  overscroll-behavior: contain;
+}
+
+.select-popover[hidden] {
+  display: none;
+}
+
+.select-popover [role="option"] {
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 2px;
+  background: transparent;
+  font-weight: 800;
+  text-align: left;
+}
+
+.select-popover [role="option"]:hover,
+.select-popover [role="option"]:focus-visible {
+  color: var(--rice);
+  outline: 0;
+  background: var(--ink);
+}
+
+.select-popover [role="option"][aria-selected="true"] {
+  color: var(--ink-deep);
+  background: var(--mustard);
+}
+
+.main-stage {
+  width: min(100%, 1500px);
+  height: 100%;
+  min-height: 0;
+  padding: 12px clamp(16px, 2.4vw, 38px);
+  overflow: hidden;
+  grid-template-columns: minmax(150px, 190px) minmax(360px, 1fr) minmax(240px, 288px);
+  align-items: center;
+  gap: clamp(18px, 2vw, 34px);
+}
+
+.path-rail {
+  align-self: center;
+  padding: 12px 0;
+}
+
+.rail-label {
+  margin-bottom: 14px;
+}
+
+.path-rail ol {
+  gap: 12px;
+}
+
+.path-rail button,
+.path-rail li > span,
+.path-current {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  text-align: left;
+  font-weight: 800;
+}
+
+.path-current {
+  color: var(--rice);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--vermilion);
+}
+
+.path-back {
+  color: var(--ink-deep);
+  border: 2px dashed var(--ink);
+  background: var(--paper);
+  box-shadow: none;
+}
+
+.path-back::after {
+  margin-left: auto;
+  content: "↩";
+  color: var(--vermilion);
+}
+
+.wheel-stage {
+  height: 100%;
+  min-height: 0;
+  align-content: center;
+}
+
+.wheel-wrap {
+  --wheel-size: min(100%, calc(100dvh - 280px), 620px);
+  width: var(--wheel-size);
+  height: var(--wheel-size);
+  aspect-ratio: 1 / 1;
+  flex: 0 0 auto;
+  border-width: 8px;
+  box-shadow:
+    0 0 0 4px var(--ink),
+    0 0 0 9px var(--paper),
+    0 0 0 12px var(--ink);
+}
+
+.stage-heading {
+  padding: 4px 16px 6px;
+  margin-bottom: -8px;
+}
+
+.stage-heading h2 {
+  font-size: 1.12rem;
+}
+
+.chopstick-pointer {
+  top: -14px;
+  height: 60px;
+}
+
+.chopstick-pointer span {
+  height: 54px;
+}
+
+.wheel-feedback {
+  min-width: 140px;
+  padding-block: 3px;
+  margin-top: -5px;
+  font-size: 0.78rem;
+}
+
+.candidate-ticket {
+  width: 100%;
+  max-height: 100%;
+  padding: 14px;
+  overflow: hidden;
+}
+
+.candidate-ticket header {
+  padding-bottom: 8px;
+}
+
+.candidate-ticket h2 {
+  font-size: 1rem;
+}
+
+.ticket-stamp {
+  width: 40px;
+  font-size: 0.72rem;
+  rotate: 5deg;
+}
+
+.candidate-ticket ol {
+  padding: 5px 0;
+}
+
+.candidate-ticket li {
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 0 6px;
+  padding: 4px 0;
+  line-height: 1.22;
+}
+
+.candidate-ticket li b {
+  font-size: 0.82rem;
+}
+
+.candidate-ticket li small {
+  font-size: 0.68rem;
+}
+
+.candidate-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: 8px;
+}
+
+.candidate-actions .ticket-action {
+  min-height: 40px;
+  padding: 5px 7px;
+  box-shadow: 3px 3px 0 var(--vermilion);
+  font-size: 0.76rem;
+}
+
+.candidate-actions .save-action {
+  color: var(--ink-deep);
+  background: var(--mustard);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.status-strip {
+  min-height: 0;
+  padding: 4px 18px;
+  font-size: 0.72rem;
+}
+
+.result-ticket {
+  width: min(92vw, 620px);
+}
+
+.result-visual canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+}
+
+.result-copy h2 {
+  font-size: clamp(2rem, 7vw, 3.2rem);
+}
+
+@media (max-width: 68rem) {
+  .app-shell {
+    grid-template-rows: 64px 62px minmax(0, 1fr) 36px;
+  }
+
+  .topbar {
+    grid-template-columns: minmax(190px, 1fr) auto minmax(160px, 1fr);
+  }
+
+  .mode-control {
+    grid-row: auto;
+    grid-column: auto;
+  }
+
+  .main-stage {
+    grid-template-areas: "path wheel candidates";
+    grid-template-columns: minmax(140px, 172px) minmax(320px, 1fr) minmax(220px, 260px);
+    align-items: center;
+    gap: 18px;
+  }
+
+  .wheel-wrap {
+    --wheel-size: min(100%, calc(100dvh - 280px), 520px);
+  }
+
+  .candidate-ticket {
+    align-self: center;
+  }
+}
+
+@media (max-width: 48rem) {
+  .app-shell {
+    grid-template-rows: 108px 56px minmax(0, 1fr) 32px;
+  }
+
+  .topbar {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    padding: 8px 12px;
+  }
+
+  .brand h1 {
+    font-size: 1rem;
+  }
+
+  .brand-mark {
+    width: 36px;
+  }
+
+  .mode-control {
+    width: min(100%, 340px);
+    grid-row: 2;
+    grid-column: 1 / -1;
+    justify-self: center;
+  }
+
+  .mode-control span {
+    min-height: 34px;
+    padding-inline: 8px;
+    font-size: 0.82rem;
+  }
+
+  .tool-button {
+    min-width: 64px;
+    padding-inline: 7px;
+  }
+
+  .quick-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+    padding: 6px 8px;
+  }
+
+  .menu-tag {
+    grid-template-columns: 42px minmax(0, 1fr);
+    min-height: 40px;
+  }
+
+  .menu-tag > span {
+    min-height: 36px;
+    padding: 2px 4px;
+    font-size: 0.68rem;
+  }
+
+  .select-trigger {
+    min-height: 36px;
+    padding-inline: 7px 5px;
+    font-size: 0.7rem;
+  }
+
+  .select-popover {
+    right: -4px;
+    left: -44px;
+  }
+
+  .main-stage {
+    grid-template-areas:
+      "path"
+      "wheel"
+      "candidates";
+    grid-template-rows: 50px minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+    padding: 6px 10px;
+  }
+
+  .path-rail {
+    width: 100%;
+    padding: 0;
+    border: 0;
+  }
+
+  .rail-label {
+    display: none;
+  }
+
+  .path-rail ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .path-rail li {
+    min-width: 0;
+    padding: 0;
+  }
+
+  .path-rail li::before {
+    display: none;
+  }
+
+  .path-rail button,
+  .path-rail li > span,
+  .path-current {
+    min-height: 44px;
+    justify-content: center;
+    padding: 3px 5px;
+    overflow: hidden;
+    font-size: 0.68rem;
+    text-align: center;
+  }
+
+  .path-back::after {
+    display: none;
+  }
+
+  .wheel-stage {
+    align-content: center;
+  }
+
+  .wheel-wrap {
+    --wheel-size: min(calc(100vw - 32px), calc(100dvh - 540px), 360px);
+    min-width: 210px;
+    min-height: 210px;
+    border-width: 6px;
+    box-shadow:
+      0 0 0 3px var(--ink),
+      0 0 0 6px var(--paper),
+      0 0 0 8px var(--ink);
+  }
+
+  .stage-heading {
+    padding: 2px 12px 4px;
+  }
+
+  .stage-heading p {
+    font-size: 0.58rem;
+  }
+
+  .stage-heading h2 {
+    font-size: 0.9rem;
+  }
+
+  .wheel-feedback {
+    min-width: 120px;
+    padding: 2px 10px;
+    font-size: 0.68rem;
+  }
+
+  .candidate-ticket {
+    width: 100%;
+    padding: 8px 10px;
+  }
+
+  .candidate-ticket header {
+    align-items: center;
+    padding-bottom: 4px;
+  }
+
+  .candidate-ticket header p {
+    font-size: 0.58rem;
+  }
+
+  .candidate-ticket h2 {
+    font-size: 0.84rem;
+  }
+
+  .ticket-stamp {
+    width: 32px;
+    font-size: 0.58rem;
+  }
+
+  .candidate-ticket ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0 6px;
+    padding: 3px 0;
+  }
+
+  .candidate-ticket li {
+    display: flex;
+    min-width: 0;
+    gap: 4px;
+    padding: 2px 0;
+    border-bottom: 1px dashed rgb(18 63 53 / 28%);
+  }
+
+  .candidate-ticket li > span {
+    grid-row: auto;
+    flex: 0 0 auto;
+    font-size: 0.58rem;
+  }
+
+  .candidate-ticket li b {
+    overflow: hidden;
+    font-size: 0.68rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .candidate-ticket li small {
+    display: none;
+  }
+
+  .candidate-actions .ticket-action {
+    min-height: 34px;
+    font-size: 0.68rem;
+  }
+
+  .status-strip {
+    flex-wrap: nowrap;
+    gap: 12px;
+    padding: 3px 8px;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .status-strip p:last-child {
+    width: auto;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+  }
+
+  .result-ticket {
+    width: calc(100vw - 20px);
+    max-height: 94dvh;
+    padding: 12px;
+  }
+
+  .result-visual {
+    margin: 10px 0;
+  }
+
+  .result-copy ul {
+    margin-bottom: 10px;
+  }
+
+  .result-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .result-actions button {
+    padding-inline: 5px;
+    font-size: 0.72rem;
+  }
+
+  .library-drawer {
+    height: min(92dvh, 760px);
+  }
+
+  .drawer-content {
+    height: calc(min(92dvh, 760px) - 129px);
+  }
+}
+
+@media (max-width: 30rem) {
+  .quick-filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .menu-tag {
+    grid-template-columns: 38px minmax(0, 1fr);
+  }
+
+  .topbar-actions {
+    gap: 5px;
+  }
+
+  .tool-button {
+    min-width: 60px;
+    grid-template-columns: 18px auto;
+    gap: 4px;
+    padding-inline: 5px;
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-height: 44rem) {
+  .wheel-wrap {
+    --wheel-size: min(100%, calc(100dvh - 274px), 430px);
+  }
+
+  .candidate-ticket li {
+    padding-block: 2px;
+  }
+}
+
+@media (max-width: 48rem) and (max-height: 44rem) {
+  .wheel-wrap {
+    --wheel-size: min(calc(100vw - 32px), calc(100dvh - 520px), 270px);
   }
 }

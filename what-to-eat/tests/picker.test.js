@@ -144,6 +144,53 @@ test("buildHierarchyOptions returns matching dishes at a complete path", () => {
   assert.ok(options.every((food) => food.group === "中餐" && food.cuisine === "广西风味"));
 });
 
+test("hierarchy root always exposes every common group before filters apply", async () => {
+  const picker = await import("../picker.js");
+  assert.equal(typeof picker.createHierarchyCandidates, "function");
+
+  const candidates = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: [],
+    filters: { meal: "早餐", flavor: "清淡点", spend: "简单吃" },
+    exclusions: {},
+    now: 1_000,
+  });
+
+  assert.deepEqual(candidates.map((candidate) => candidate.name), TOP_LEVEL_GROUPS);
+});
+
+test("hierarchy filters cuisines and dishes only after a root group is chosen", async () => {
+  const picker = await import("../picker.js");
+  assert.equal(typeof picker.createHierarchyCandidates, "function");
+
+  const cuisines = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: ["中餐"],
+    filters: { meal: "早餐", flavor: "清淡点", spend: "简单吃" },
+    exclusions: {},
+    now: 1_000,
+  });
+  const dishes = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: ["中餐", "面食"],
+    filters: { meal: "早餐", flavor: "清淡点", spend: "简单吃" },
+    exclusions: {},
+    now: 1_000,
+    limit: 12,
+    rng: () => 0,
+  });
+
+  assert.deepEqual(cuisines.map((candidate) => candidate.name), ["面食"]);
+  assert.ok(dishes.length >= 2);
+  assert.ok(dishes.every((food) => (
+    food.group === "中餐"
+    && food.cuisine === "面食"
+    && food.meals.includes("早餐")
+    && food.flavors.includes("清淡点")
+    && food.spends.includes("简单吃")
+  )));
+});
+
 test("pickSecureIndex returns an in-bounds index from accepted secure values", () => {
   for (const randomValues of [[0], [1], [0xffffffff, 5]]) {
     const index = pickSecureIndex(7, randomValues);

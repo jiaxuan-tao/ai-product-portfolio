@@ -9,6 +9,8 @@ const htmlPath = path.join(projectRoot, "index.html");
 const cssPath = path.join(projectRoot, "styles.css");
 const appPath = path.join(projectRoot, "app.js");
 const audioPath = path.join(projectRoot, "audio.js");
+const artPath = path.join(projectRoot, "food-art.js");
+const selectMenuPath = path.join(projectRoot, "select-menu.js");
 const posterPath = path.join(projectRoot, "assets", "food-poster.jpg");
 const html = existsSync(htmlPath) ? readFileSync(htmlPath, "utf8") : "";
 const css = existsSync(cssPath) ? readFileSync(cssPath, "utf8") : "";
@@ -65,7 +67,8 @@ test("icon-only controls have accessible names and tooltips", () => {
 
 test("result ticket includes local artwork and every decision action", () => {
   assert.match(html, /<dialog[^>]*id="result-ticket"/);
-  assert.match(html, /<img[^>]*src="assets\/food-poster\.jpg"/);
+  assert.match(html, /<canvas[^>]*id="result-art"/);
+  assert.ok(existsSync(artPath), "food-art.js should exist");
   assert.match(html, /就吃这个菜系/);
   assert.match(html, /继续选一道菜/);
   assert.match(html, /暂时不要/);
@@ -106,6 +109,48 @@ test("playful canteen CSS defines its grid, hard shadows, layout, and responsive
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
 });
 
+test("desktop application is constrained to one viewport without body scrolling", () => {
+  assert.match(css, /(?:html,\s*body|body,\s*html)[^{]*\{[^}]*height:\s*100%/s);
+  assert.match(css, /\.app-shell\s*\{[^}]*height:\s*100dvh/s);
+  assert.match(css, /\.app-shell\s*\{[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.main-stage\s*\{[^}]*min-height:\s*0/s);
+  assert.match(css, /\.wheel-wrap\s*\{[^}]*--wheel-size:/s);
+  assert.match(css, /aspect-ratio:\s*1(?:\s*\/\s*1)?/);
+});
+
+test("filter controls use themed listboxes instead of opening native select menus", () => {
+  assert.ok(existsSync(selectMenuPath), "select-menu.js should exist");
+  assert.match(app, /from\s+["']\.\/select-menu\.js["']/);
+  assert.match(app, /enhanceSelects/);
+  assert.match(css, /\.select-trigger/);
+  assert.match(css, /\.select-popover/);
+  assert.match(css, /\[role="listbox"\]/);
+});
+
+test("candidate ticket uses clear date copy, a meaningful stamp, and non-overlapping actions", () => {
+  assert.match(html, /<time[^>]*id="ticket-date"/);
+  assert.doesNotMatch(html, /NO\.\s*<span id="ticket-number"/);
+  assert.match(html, /class="ticket-stamp"[^>]*>\s*今日\s*</);
+  assert.match(html, /class="candidate-actions"[\s\S]*id="refresh-candidates"[\s\S]*id="save-combination"/);
+  assert.match(css, /\.candidate-actions\s*\{[^}]*display:\s*grid/s);
+});
+
+test("path current state is non-interactive while completed steps are explicit back buttons", () => {
+  assert.match(app, /className\s*=\s*["']path-current["']/);
+  assert.match(app, /className\s*=\s*["']path-back["']/);
+  assert.match(app, /aria-current/);
+});
+
+test("topbar tools expose visible sound and library state", () => {
+  assert.match(html, /id="sound-state"/);
+  assert.match(html, /id="library-state"/);
+  assert.match(html, /id="open-library"[^>]*aria-expanded="false"/s);
+  assert.match(app, /dataset\.enabled/);
+  assert.match(app, /aria-expanded/);
+  assert.match(css, /\.tool-button\[data-enabled="false"\]/);
+  assert.match(css, /\.tool-button\[aria-expanded="true"\]/);
+});
+
 test("application module wires picker, storage, audio, animation, and secure randomness", () => {
   assert.ok(existsSync(appPath), "app.js should exist");
   assert.ok(existsSync(audioPath), "audio.js should exist");
@@ -114,6 +159,7 @@ test("application module wires picker, storage, audio, animation, and secure ran
   assert.match(app, /from\s+["']\.\/picker\.js["']/);
   assert.match(app, /from\s+["']\.\/storage\.js["']/);
   assert.match(app, /from\s+["']\.\/audio\.js["']/);
+  assert.match(app, /from\s+["']\.\/food-art\.js["']/);
   assert.match(app, /requestAnimationFrame/);
   assert.match(app, /crypto\.getRandomValues/);
   assert.match(app, /prefers-reduced-motion/);
@@ -156,7 +202,7 @@ test("library tabs implement roving tabindex and synchronized panels", () => {
 test("runtime normalizes legacy filter options and guards undersized candidate pools", () => {
   assert.match(app, /来点硬菜/);
   assert.match(app, /犒劳自己/);
-  assert.match(app, /availableCuisines/);
+  assert.match(app, /createHierarchyCandidates/);
   assert.match(app, /candidatePool\.length\s*<\s*2/);
   assert.match(app, /放宽|减少筛选|候选不足/);
 });

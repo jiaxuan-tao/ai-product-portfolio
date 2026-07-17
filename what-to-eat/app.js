@@ -1,8 +1,7 @@
 import { FOODS } from "./foods.js";
 import {
-  buildHierarchyOptions,
   createCandidatePool,
-  filterFoods,
+  createHierarchyCandidates,
   pickSecureIndex,
 } from "./picker.js";
 import {
@@ -12,6 +11,11 @@ import {
   saveState,
 } from "./storage.js";
 import { createAudioController } from "./audio.js";
+import { renderFoodArtwork } from "./food-art.js";
+import {
+  enhanceSelects,
+  syncEnhancedSelects,
+} from "./select-menu.js";
 
 const UI_STORAGE_KEY = "what-to-eat.ui.v1";
 const CORE_STORAGE_KEY = "what-to-eat.state.v1";
@@ -32,18 +36,22 @@ const elements = {
   candidateCount: document.getElementById("candidate-count"),
   filterSummary: document.getElementById("filter-summary"),
   refresh: document.getElementById("refresh-candidates"),
-  ticketNumber: document.getElementById("ticket-number"),
+  saveCombination: document.getElementById("save-combination"),
+  ticketDate: document.getElementById("ticket-date"),
   pathList: document.getElementById("path-list"),
   sound: document.getElementById("sound-toggle"),
+  soundState: document.getElementById("sound-state"),
   openLibrary: document.getElementById("open-library"),
+  libraryState: document.getElementById("library-state"),
   library: document.getElementById("library-drawer"),
   closeLibrary: document.getElementById("close-library"),
   result: document.getElementById("result-ticket"),
   closeResult: document.getElementById("close-result"),
   resultName: document.getElementById("result-name"),
   resultCategory: document.getElementById("result-category"),
+  resultArt: document.getElementById("result-art"),
   resultTags: document.getElementById("result-tags"),
-  resultNumber: document.getElementById("result-number"),
+  resultTime: document.getElementById("result-time"),
   cuisineActions: document.getElementById("cuisine-result-actions"),
   foodActions: document.getElementById("food-result-actions"),
   acceptCuisine: document.getElementById("accept-cuisine"),
@@ -261,35 +269,6 @@ function describeCandidate(item) {
   return `${item.cuisine} · ${item.group}`;
 }
 
-function createCuisineCandidates(foods) {
-  const eligibleFoods = filterFoods(foods, currentFilters(), currentExclusions());
-
-  if (hierarchyPath.length === 0) {
-    const availableGroups = new Set(eligibleFoods.map((food) => food.group));
-    return buildHierarchyOptions(eligibleFoods, []).filter((item) => availableGroups.has(item.name));
-  }
-
-  if (hierarchyPath.length === 1) {
-    const availableCuisines = new Set(
-      eligibleFoods
-        .filter((food) => food.group === hierarchyPath[0])
-        .map((food) => food.cuisine),
-    );
-    return buildHierarchyOptions(eligibleFoods, hierarchyPath)
-      .filter((item) => availableCuisines.has(item.name));
-  }
-
-  const scopedFoods = foods.filter((food) => (
-    food.group === hierarchyPath[0] && food.cuisine === hierarchyPath[1]
-  ));
-  return createCandidatePool({
-    foods: scopedFoods,
-    filters: currentFilters(),
-    exclusions: currentExclusions(),
-    limit: 12,
-  });
-}
-
 function refreshCandidatePool() {
   const foods = getAllFoods();
   candidatePool = mode === "direct"
@@ -299,7 +278,13 @@ function refreshCandidatePool() {
       exclusions: currentExclusions(),
       limit: 12,
     })
-    : createCuisineCandidates(foods);
+    : createHierarchyCandidates({
+      foods,
+      path: hierarchyPath,
+      filters: currentFilters(),
+      exclusions: currentExclusions(),
+      limit: 12,
+    });
 
   renderCandidates();
   renderPath();
@@ -323,10 +308,16 @@ function renderCandidates() {
   const count = candidatePool.length;
   elements.stageCount.textContent = String(count);
   elements.candidateCount.textContent = String(count);
-  elements.ticketNumber.textContent = new Intl.DateTimeFormat("zh-CN", {
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date()).replace("/", "");
+  const today = new Date();
+  elements.ticketDate.textContent = new Intl.DateTimeFormat("zh-CN", {
+    month: "numeric",
+    day: "numeric",
+  }).format(today);
+  elements.ticketDate.dateTime = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
 
   const filters = currentFilters();
   elements.filterSummary.textContent = [filters.meal, filters.flavor, filters.spend].join(" · ");
@@ -355,14 +346,22 @@ function renderCandidates() {
 function appendPathStep(index, label, state, depth) {
   const item = document.createElement("li");
   item.className = `is-${state}`;
-  if (state === "current" || state === "complete") {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.dataset.depth = String(depth);
-    if (state === "current") button.setAttribute("aria-current", "step");
+  if (state === "current") {
+    const current = document.createElement("div");
+    current.className = "path-current";
+    current.setAttribute("aria-current", "step");
     const number = document.createElement("span");
     number.textContent = String(index).padStart(2, "0");
-    button.append(number, document.createTextNode(label));
+    current.append(number, document.createTextNode(label));
+    item.append(current);
+  } else if (state === "complete") {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "path-back";
+    button.dataset.depth = String(depth);
+    const number = document.createElement("span");
+    number.textContent = String(index).padStart(2, "0");
+    button.append(number, document.createTextNode(label), document.createTextNode(" 返回"));
     item.append(button);
   } else {
     const pending = document.createElement("span");
@@ -555,7 +554,14 @@ function showResult(item) {
   elements.resultCategory.textContent = isCategory
     ? (item.group || "菜系大类")
     : `${item.cuisine} · ${item.group}`;
-  elements.resultNumber.textContent = String(Date.now()).slice(-4);
+  const now = new Date();
+  elements.resultTime.textContent = new Intl.DateTimeFormat("zh-CN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(now);
+  elements.resultTime.dateTime = now.toISOString();
+  renderFoodArtwork(elements.resultArt, item);
   elements.resultTags.replaceChildren(...resultTags(item).map((tag) => {
     const listItem = document.createElement("li");
     listItem.textContent = tag;
@@ -641,6 +647,8 @@ function setSoundEnabled(enabled) {
   elements.sound.setAttribute("aria-pressed", String(enabled));
   elements.sound.setAttribute("aria-label", enabled ? "关闭音效" : "开启音效");
   elements.sound.title = enabled ? "关闭音效" : "开启音效";
+  elements.sound.dataset.enabled = String(enabled);
+  elements.soundState.textContent = enabled ? "音效开" : "音效关";
   persistCoreState();
 }
 
@@ -772,6 +780,7 @@ function addCustomFood(event) {
   coreState = { ...coreState, customFoods: [food, ...coreState.customFoods] };
   persistCoreState();
   elements.customForm.reset();
+  syncEnhancedSelects(elements.customForm);
   elements.customFeedback.textContent = `${name} 已添加，可参与筛选和转盘`;
   renderLibrary();
   refreshCandidatePool();
@@ -803,16 +812,10 @@ function setupLibraryTabs() {
 }
 
 function ensureCombinationControls() {
-  if (document.getElementById("save-combination")) return;
-  const button = document.createElement("button");
-  button.id = "save-combination";
-  button.className = "button-secondary";
-  button.type = "button";
-  button.textContent = "保存当前组合";
-  button.addEventListener("click", saveCurrentCombination);
-  elements.refresh.insertAdjacentElement("afterend", button);
+  elements.saveCombination.addEventListener("click", saveCurrentCombination);
 
   const panel = document.getElementById("panel-preset");
+  if (document.getElementById("saved-combinations")) return;
   const heading = document.createElement("div");
   heading.className = "panel-heading";
   const title = document.createElement("h3");
@@ -882,10 +885,13 @@ function applyCombination(id) {
   elements.meal.value = combination.filters.meal === "不限" ? "" : combination.filters.meal;
   elements.flavor.value = combination.filters.flavor === "不限" ? "" : combination.filters.flavor;
   elements.spend.value = combination.filters.spend === "不限" ? "" : combination.filters.spend;
+  syncEnhancedSelects(document);
   saveUiState();
   persistCoreState();
   refreshCandidatePool();
   elements.library.close();
+  elements.openLibrary.setAttribute("aria-expanded", "false");
+  elements.libraryState.textContent = "菜库";
   elements.spin.focus();
 }
 
@@ -918,10 +924,16 @@ function bindEvents() {
   elements.openLibrary.addEventListener("click", () => {
     libraryInvoker = document.activeElement;
     renderLibrary();
-    elements.library.showModal();
+    if (!elements.library.open) elements.library.showModal();
+    elements.openLibrary.setAttribute("aria-expanded", "true");
+    elements.libraryState.textContent = "菜库开";
   });
   elements.closeLibrary.addEventListener("click", () => elements.library.close());
-  elements.library.addEventListener("close", () => libraryInvoker?.focus());
+  elements.library.addEventListener("close", () => {
+    elements.openLibrary.setAttribute("aria-expanded", "false");
+    elements.libraryState.textContent = "菜库";
+    libraryInvoker?.focus();
+  });
   elements.customForm.addEventListener("submit", addCustomFood);
   [elements.presetFoods, elements.customFoods, elements.blockedFoods].forEach((list) => {
     list.addEventListener("click", handleLibraryAction);
@@ -936,6 +948,7 @@ function bindEvents() {
 
 function initialize() {
   normalizeFilterControls();
+  enhanceSelects(document);
   ensureCombinationControls();
   setupLibraryTabs();
   bindEvents();

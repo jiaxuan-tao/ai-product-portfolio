@@ -80,3 +80,43 @@ export function createCandidatePool({
 
   return sampleCandidates(eligibleFoods, candidateLimit, rng);
 }
+
+export function createHierarchyCandidates({
+  foods,
+  path = [],
+  filters = {},
+  exclusions = {},
+  now = Date.now(),
+  limit = 12,
+  rng = Math.random,
+}) {
+  if (path.length === 0) {
+    return buildHierarchyOptions(foods, []);
+  }
+
+  const eligibleFoods = filterFoods(foods, filters, exclusions, now);
+
+  if (path.length === 1) {
+    const availableCuisines = new Set(
+      eligibleFoods
+        .filter((food) => food.group === path[0])
+        .map((food) => food.cuisine),
+    );
+
+    return buildHierarchyOptions(eligibleFoods, path)
+      .filter((item) => availableCuisines.has(item.name));
+  }
+
+  const scopedFoods = foods.filter((food) => (
+    food.group === path[0] && food.cuisine === path[1]
+  ));
+
+  return createCandidatePool({
+    foods: scopedFoods,
+    filters,
+    exclusions,
+    now,
+    limit,
+    rng,
+  });
+}
