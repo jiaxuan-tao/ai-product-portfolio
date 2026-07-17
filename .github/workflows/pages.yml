@@ -45,6 +45,7 @@ jobs:
         run: |
           mkdir -p _site/assets _site/poker-ev-coach _site/prompt-manager _site/vibe-coding-prompt-library
           cp site/index.html _site/index.html
+          cp site/favicon.svg _site/favicon.svg
           cp prompt-manager/docs/screenshots/home.png _site/assets/prompt-manager.png
           cp poker-ev-coach/docs/images/poker-ev-coach-preview.png _site/assets/poker-ev-coach.png
           cp vibe-coding-prompt-library/assets/vibe-coding-prompt-library-preview.png _site/assets/vibe-coding-prompt-library.png
