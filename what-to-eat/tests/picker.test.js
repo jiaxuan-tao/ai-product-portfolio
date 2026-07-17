@@ -20,8 +20,24 @@ test("preset taxonomy has at least 90 uniquely identified concrete dishes", () =
   assert.equal(new Set(FOODS.map((food) => food.id)).size, FOODS.length);
   assert.equal(new Set(FOODS.map((food) => food.name)).size, FOODS.length);
   assert.ok(FOODS.every((food) => food.meals.length && food.flavors.length && food.spends.length));
+  assert.ok(Object.isFrozen(FOODS));
+  assert.ok(FOODS.every((food) => (
+    Object.isFrozen(food)
+    && Object.isFrozen(food.meals)
+    && Object.isFrozen(food.flavors)
+    && Object.isFrozen(food.spends)
+  )));
+  assert.notEqual(FOODS[0].meals, FOODS[1].meals);
+  assert.notEqual(FOODS[0].spends, FOODS[1].spends);
   assert.equal(getFoodById("luosifen")?.name, "螺蛳粉");
   assert.equal(getFoodById("missing-food"), undefined);
+});
+
+test("real preset foods cover every top-level group and Chinese sub-cuisine", () => {
+  assert.ok(TOP_LEVEL_GROUPS.every((group) => FOODS.some((food) => food.group === group)));
+  assert.ok(CHINESE_CUISINES.every((cuisine) => (
+    FOODS.some((food) => food.group === "中餐" && food.cuisine === cuisine)
+  )));
 });
 
 test("filterFoods intersects exact meal, flavor, and spend tags", () => {
@@ -63,6 +79,19 @@ test("filterFoods excludes recent accepted dishes and only unexpired blocks", ()
   assert.deepEqual(result.map((food) => food.id), ["expired", "available"]);
 });
 
+test("filterFoods internally excludes only the three most recent accepted IDs", () => {
+  const foods = ["first", "second", "third", "older"].map((id) => ({
+    id,
+    meals: [],
+    flavors: [],
+    spends: [],
+  }));
+
+  const result = filterFoods(foods, {}, { recentAccepted: ["first", "second", "third", "older"] }, 1_000);
+
+  assert.deepEqual(result.map((food) => food.id), ["older"]);
+});
+
 test("sampleCandidates returns unique items and clamps the requested size to 12", () => {
   const items = Array.from({ length: 20 }, (_, index) => ({ id: `food-${index}` }));
   const candidates = sampleCandidates(items, 99, () => 0);
@@ -98,12 +127,19 @@ test("buildHierarchyOptions returns matching dishes at a complete path", () => {
   assert.ok(options.every((food) => food.group === "中餐" && food.cuisine === "广西风味"));
 });
 
-test("pickSecureIndex always returns an in-bounds index", () => {
-  for (const randomValues of [[0], [1], [0xffffffff], [0xffffffff, 5]]) {
+test("pickSecureIndex returns an in-bounds index from accepted secure values", () => {
+  for (const randomValues of [[0], [1], [0xffffffff, 5]]) {
     const index = pickSecureIndex(7, randomValues);
     assert.ok(index >= 0 && index < 7);
   }
   assert.equal(pickSecureIndex(0, [1]), -1);
+});
+
+test("pickSecureIndex rejects exhausted out-of-range entropy without modulo bias", () => {
+  assert.throws(
+    () => pickSecureIndex(7, [0xffffffff]),
+    /fresh random values/i,
+  );
 });
 
 test("createCandidatePool filters before sampling", () => {
@@ -123,4 +159,56 @@ test("createCandidatePool filters before sampling", () => {
   });
 
   assert.deepEqual(pool.map((food) => food.id), ["eligible"]);
+});
+
+test("createCandidatePool keeps eight candidates when at least eight foods are eligible", () => {
+  const foods = Array.from({ length: 10 }, (_, index) => ({
+    id: `eligible-${index}`,
+    meals: ["晚餐"],
+    flavors: ["清淡点"],
+    spends: ["简单吃"],
+  }));
+
+  for (const limit of [0, 1]) {
+    const pool = createCandidatePool({ foods, filters: { meal: "晚餐" }, limit, rng: () => 0 });
+    assert.equal(pool.length, 8);
+    assert.equal(new Set(pool.map((food) => food.id)).size, 8);
+  }
+});
+
+test("createCandidatePool returns every eligible food when fewer than eight remain", () => {
+  const foods = Array.from({ length: 2 }, (_, index) => ({
+    id: `eligible-${index}`,
+    meals: ["晚餐"],
+    flavors: ["清淡点"],
+    spends: ["简单吃"],
+  }));
+
+  const pool = createCandidatePool({ foods, filters: { meal: "晚餐" }, limit: 0, rng: () => 0 });
+
+  assert.deepEqual(pool.map((food) => food.id).sort(), ["eligible-0", "eligible-1"]);
+});
+
+test("picker functions leave caller-provided inputs unchanged", () => {
+  const foods = [
+    { id: "one", meals: ["晚餐"], flavors: ["清淡点"], spends: ["简单吃"], group: "中餐", cuisine: "川湘菜" },
+    { id: "two", meals: ["午餐"], flavors: ["想吃辣"], spends: ["正常吃"], group: "中餐", cuisine: "粤菜" },
+  ];
+  const filters = { meal: "晚餐" };
+  const exclusions = { recentAccepted: [], blockedUntil: { one: 999 } };
+  const path = ["中餐"];
+  const foodsBefore = structuredClone(foods);
+  const filtersBefore = structuredClone(filters);
+  const exclusionsBefore = structuredClone(exclusions);
+  const pathBefore = structuredClone(path);
+
+  filterFoods(foods, filters, exclusions, 1_000);
+  sampleCandidates(foods, 2, () => 0);
+  buildHierarchyOptions(foods, path);
+  createCandidatePool({ foods, filters, exclusions, now: 1_000, limit: 8, rng: () => 0 });
+
+  assert.deepEqual(foods, foodsBefore);
+  assert.deepEqual(filters, filtersBefore);
+  assert.deepEqual(exclusions, exclusionsBefore);
+  assert.deepEqual(path, pathBefore);
 });

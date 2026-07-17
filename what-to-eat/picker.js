@@ -5,7 +5,7 @@ function matchesTag(tags, selectedTag) {
 }
 
 export function filterFoods(foods, filters = {}, exclusions = {}, now = Date.now()) {
-  const recentAccepted = new Set(exclusions.recentAccepted ?? []);
+  const recentAccepted = new Set((exclusions.recentAccepted ?? []).slice(0, 3));
   const blockedUntil = exclusions.blockedUntil ?? {};
 
   return foods.filter((food) => (
@@ -58,7 +58,7 @@ export function pickSecureIndex(length, randomValues) {
     if (normalized < acceptedRange) return normalized % length;
   }
 
-  return values.length ? (Number(values[values.length - 1]) >>> 0) % length : 0;
+  throw new RangeError("No accepted secure random value; retry with fresh random values.");
 }
 
 export function createCandidatePool({
@@ -69,5 +69,11 @@ export function createCandidatePool({
   limit = 12,
   rng = Math.random,
 }) {
-  return sampleCandidates(filterFoods(foods, filters, exclusions, now), limit, rng);
+  const eligibleFoods = filterFoods(foods, filters, exclusions, now);
+  const requestedLimit = Number.isFinite(Number(limit)) ? Math.floor(Number(limit)) : 12;
+  const candidateLimit = eligibleFoods.length >= 8
+    ? Math.max(8, requestedLimit)
+    : eligibleFoods.length;
+
+  return sampleCandidates(eligibleFoods, candidateLimit, rng);
 }

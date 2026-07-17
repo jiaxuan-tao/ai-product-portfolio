@@ -1,4 +1,4 @@
-export const TOP_LEVEL_GROUPS = [
+export const TOP_LEVEL_GROUPS = Object.freeze([
   "中餐",
   "西餐",
   "日料",
@@ -6,9 +6,9 @@ export const TOP_LEVEL_GROUPS = [
   "东南亚",
   "快餐小吃",
   "轻食甜品",
-];
+]);
 
-export const CHINESE_CUISINES = [
+export const CHINESE_CUISINES = Object.freeze([
   "川湘菜",
   "粤菜",
   "江浙菜",
@@ -18,26 +18,26 @@ export const CHINESE_CUISINES = [
   "广西风味",
   "火锅烧烤",
   "面食",
-];
+]);
 
-const mealTags = ["午餐", "晚餐"];
-const normalSpend = ["正常吃"];
+const mealTags = Object.freeze(["午餐", "晚餐"]);
+const normalSpend = Object.freeze(["正常吃"]);
 
 function createFood(id, name, group, cuisine, overrides = {}) {
-  return {
+  return Object.freeze({
     id,
     name,
     group,
     cuisine,
-    meals: mealTags,
-    flavors: ["来点硬菜"],
-    spends: normalSpend,
-    visual: "dish",
     ...overrides,
-  };
+    meals: Object.freeze([...(overrides.meals ?? mealTags)]),
+    flavors: Object.freeze([...(overrides.flavors ?? ["来点硬菜"])]),
+    spends: Object.freeze([...(overrides.spends ?? normalSpend)]),
+    visual: overrides.visual ?? "dish",
+  });
 }
 
-export const FOODS = [
+export const FOODS = Object.freeze([
   createFood("mapo-tofu", "麻婆豆腐", "中餐", "川湘菜", { flavors: ["想吃辣", "来点硬菜"] }),
   createFood("kung-pao-chicken", "宫保鸡丁", "中餐", "川湘菜", { flavors: ["想吃辣", "来点硬菜"] }),
   createFood("twice-cooked-pork", "回锅肉", "中餐", "川湘菜", { flavors: ["想吃辣", "来点硬菜"] }),
@@ -137,7 +137,7 @@ export const FOODS = [
   createFood("mango-pudding", "芒果布丁", "轻食甜品", "甜品", { meals: ["下午茶", "夜宵"], flavors: ["想吃甜"], spends: ["简单吃"], visual: "dessert" }),
   createFood("red-bean-shaved-ice", "红豆刨冰", "轻食甜品", "甜品", { meals: ["下午茶"], flavors: ["想吃甜", "清淡点"], spends: ["简单吃"], visual: "dessert" }),
   createFood("fruit-platter", "鲜切水果盘", "轻食甜品", "水果", { meals: ["早餐", "下午茶", "夜宵"], flavors: ["清淡点", "想吃甜"], spends: ["简单吃"], visual: "fruit" }),
-];
+]);
 
 export function getFoodById(id) {
   return FOODS.find((food) => food.id === id);
