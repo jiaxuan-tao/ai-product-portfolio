@@ -20,8 +20,11 @@ These rules apply to every project in this repository.
 - When considering open source, verify the license, recent maintenance,
   architecture weight, dependency burden, modification difficulty, and whether
   the useful parts can be isolated without inheriting unnecessary complexity.
-- Present no more than three strong candidates at a time. Give a clear
-  recommendation and ask the user to make only the direction-level choice.
+- During broad ideation, present a larger set of candidates using only a
+  product name and a brief description. Let the user identify interesting
+  directions before spending time on detailed comparisons.
+- After the user shortlists a direction, give a clear recommendation and ask
+  the user to make only the direction-level choice.
 - Do not select ideas that substantially repeat an existing project in this
   repository unless the new project has a clearly different user problem.
 
