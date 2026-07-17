@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0c4b3f">
+    <title>今天吃什么</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="今天吃什么首页">
+          <span class="brand-mark" aria-hidden="true">食</span>
+          <h1>今天吃什么</h1>
+        </a>
+
+        <fieldset id="mode-control" class="mode-control">
+          <legend class="visually-hidden">选择转盘模式</legend>
+          <label>
+            <input type="radio" name="mode" value="direct" checked>
+            <span>直接开转</span>
+          </label>
+          <label>
+            <input type="radio" name="mode" value="cuisine">
+            <span>按菜系选</span>
+          </label>
+        </fieldset>
+
+        <div class="topbar-actions">
+          <button
+            id="sound-toggle"
+            class="icon-button"
+            type="button"
+            aria-label="关闭音效"
+            aria-pressed="true"
+            title="关闭音效"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M11 5 6 9H3v6h3l5 4V5Z"></path>
+              <path d="M15.5 8.5a5 5 0 0 1 0 7"></path>
+              <path d="M18 6a8.5 8.5 0 0 1 0 12"></path>
+            </svg>
+          </button>
+          <button
+            id="open-library"
+            class="icon-button"
+            type="button"
+            aria-label="打开我的菜库"
+            title="打开我的菜库"
+            aria-haspopup="dialog"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z"></path>
+              <path d="M4 18.5A2.5 2.5 0 0 1 6.5 16H20"></path>
+            </svg>
+          </button>
+        </div>
+      </header>
+
+      <section class="quick-filters" aria-label="快速条件">
+        <label class="menu-tag" for="filter-meal">
+          <span>餐次</span>
+          <select id="filter-meal" name="meal">
+            <option value="">不限</option>
+            <option value="早餐">早餐</option>
+            <option value="午餐" selected>午餐</option>
+            <option value="晚餐">晚餐</option>
+            <option value="夜宵">夜宵</option>
+          </select>
+        </label>
+        <label class="menu-tag" for="filter-flavor">
+          <span>口味</span>
+          <select id="filter-flavor" name="flavor">
+            <option value="" selected>不限</option>
+            <option value="想吃辣">想吃辣</option>
+            <option value="清淡点">清淡点</option>
+            <option value="来点肉">来点肉</option>
+            <option value="吃点菜">吃点菜</option>
+            <option value="想吃甜">想吃甜</option>
+          </select>
+        </label>
+        <label class="menu-tag" for="filter-spend">
+          <span>预算</span>
+          <select id="filter-spend" name="spend">
+            <option value="" selected>不限</option>
+            <option value="简单吃">简单吃</option>
+            <option value="正常吃">正常吃</option>
+            <option value="吃顿好的">吃顿好的</option>
+          </select>
+        </label>
+      </section>
+
+      <main class="main-stage">
+        <nav class="path-rail" aria-label="选择路径">
+          <p class="rail-label">选择路径</p>
+          <ol id="path-list">
+            <li class="is-current">
+              <button type="button" aria-current="step">
+                <span>01</span>
+                全部菜品
+              </button>
+            </li>
+            <li class="is-pending">
+              <span><b>02</b> 菜系类别</span>
+            </li>
+            <li class="is-pending">
+              <span><b>03</b> 具体菜品</span>
+            </li>
+          </ol>
+        </nav>
+
+        <section class="wheel-stage" aria-labelledby="wheel-heading">
+          <div class="stage-heading">
+            <p>今日饭局 · <span id="stage-count">12</span> 选 1</p>
+            <h2 id="wheel-heading">午餐转盘</h2>
+          </div>
+          <div class="wheel-wrap">
+            <div class="chopstick-pointer" aria-hidden="true">
+              <span></span>
+              <span></span>
+            </div>
+            <canvas id="wheel" width="720" height="720">
+              浏览器不支持 Canvas，请升级浏览器后再试。
+            </canvas>
+            <button id="spin-button" class="spin-button" type="button">
+              <span>开转</span>
+              <small>SPIN</small>
+            </button>
+          </div>
+          <p id="wheel-feedback" class="wheel-feedback" role="status" aria-live="polite">
+            候选已备好
+          </p>
+        </section>
+
+        <section class="candidate-ticket" aria-labelledby="candidate-heading">
+          <header>
+            <div>
+              <p>NO. <span id="ticket-number">0717</span></p>
+              <h2 id="candidate-heading">今日候选菜单</h2>
+            </div>
+            <span class="ticket-stamp" aria-hidden="true">鲜</span>
+          </header>
+          <ol id="candidate-list">
+            <li><span>01</span><b>螺蛳粉</b><small>广西风味</small></li>
+            <li><span>02</span><b>寿司</b><small>日料</small></li>
+            <li><span>03</span><b>火锅</b><small>火锅烧烤</small></li>
+            <li><span>04</span><b>烤肉</b><small>韩餐</small></li>
+            <li><span>05</span><b>拉面</b><small>面食</small></li>
+            <li><span>06</span><b>披萨</b><small>西餐</small></li>
+          </ol>
+          <button id="refresh-candidates" class="ticket-action" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M20 7v5h-5"></path>
+              <path d="M4 17v-5h5"></path>
+              <path d="M6.1 9a7 7 0 0 1 11.2-2L20 12"></path>
+              <path d="m4 12 2.7 5a7 7 0 0 0 11.2-2"></path>
+            </svg>
+            换一批候选
+          </button>
+        </section>
+      </main>
+
+      <footer class="status-strip">
+        <p><span aria-hidden="true">●</span> 当前候选 <strong id="candidate-count">12</strong> 个</p>
+        <p><span aria-hidden="true">✓</span> 最近 3 次不重复</p>
+        <p id="filter-summary">午餐 · 口味不限 · 预算不限</p>
+      </footer>
+    </div>
+
+    <dialog id="result-ticket" class="result-ticket" aria-labelledby="result-name">
+      <div class="ticket-topline">
+        <p>出餐小票 · NO. <span id="result-number">0001</span></p>
+        <button
+          id="close-result"
+          class="icon-button ink-button"
+          type="button"
+          aria-label="关闭结果"
+          title="关闭结果"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18"></path>
+          </svg>
+        </button>
+      </div>
+      <figure class="result-visual">
+        <img
+          src="assets/food-poster.jpg"
+          width="1200"
+          height="800"
+          alt="面食、火锅、寿司、水饺、披萨和烤串组成的复古食堂插画"
+        >
+        <figcaption id="result-category">广西风味 · 中餐</figcaption>
+      </figure>
+      <div class="result-copy">
+        <p>本次结果</p>
+        <h2 id="result-name" tabindex="-1">螺蛳粉</h2>
+        <ul id="result-tags" aria-label="结果标签">
+          <li>午餐</li>
+          <li>想吃辣</li>
+          <li>简单吃</li>
+        </ul>
+      </div>
+      <div id="cuisine-result-actions" class="result-actions" hidden>
+        <button id="accept-cuisine" class="button-secondary" type="button">就吃这个菜系</button>
+        <button id="continue-cuisine" class="button-primary" type="button">继续选一道菜</button>
+      </div>
+      <div id="food-result-actions" class="result-actions">
+        <button id="block-result" class="button-quiet" type="button">暂时不要</button>
+        <button id="reroll-result" class="button-secondary" type="button">再转一次</button>
+        <button id="accept-result" class="button-primary" type="button">就吃这个</button>
+      </div>
+    </dialog>
+
+    <dialog id="library-drawer" class="library-drawer" aria-labelledby="library-heading">
+      <header class="drawer-header">
+        <div>
+          <p>PERSONAL MENU</p>
+          <h2 id="library-heading">我的菜库</h2>
+        </div>
+        <button
+          id="close-library"
+          class="icon-button ink-button"
+          type="button"
+          aria-label="关闭我的菜库"
+          title="关闭我的菜库"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M6 6l12 12M18 6 6 18"></path>
+          </svg>
+        </button>
+      </header>
+
+      <div class="library-tabs" role="tablist" aria-label="菜库分类">
+        <button id="tab-preset" type="button" role="tab" aria-selected="true" aria-controls="panel-preset">
+          预设
+        </button>
+        <button id="tab-favorites" type="button" role="tab" aria-selected="false" aria-controls="panel-favorites">
+          收藏
+        </button>
+        <button id="tab-custom" type="button" role="tab" aria-selected="false" aria-controls="panel-custom">
+          自定义
+        </button>
+        <button id="tab-blocked" type="button" role="tab" aria-selected="false" aria-controls="panel-blocked">
+          暂时不要
+        </button>
+      </div>
+
+      <div class="drawer-content">
+        <section id="panel-preset" role="tabpanel" aria-labelledby="tab-preset">
+          <div class="panel-heading">
+            <h3>预设菜品</h3>
+            <span id="preset-count">100 道</span>
+          </div>
+          <ul id="preset-foods" class="library-list">
+            <li>
+              <span><b>麻婆豆腐</b><small>川湘菜 · 午餐</small></span>
+              <button type="button" aria-label="收藏麻婆豆腐" title="收藏麻婆豆腐">☆</button>
+            </li>
+            <li>
+              <span><b>煲仔饭</b><small>粤菜 · 晚餐</small></span>
+              <button type="button" aria-label="收藏煲仔饭" title="收藏煲仔饭">☆</button>
+            </li>
+          </ul>
+        </section>
+
+        <section id="panel-favorites" role="tabpanel" aria-labelledby="tab-favorites" hidden>
+          <div class="panel-heading">
+            <h3>我的收藏</h3>
+            <span id="favorite-count">0 道</span>
+          </div>
+          <p class="empty-state">还没有收藏菜品。</p>
+        </section>
+
+        <section id="panel-custom" role="tabpanel" aria-labelledby="tab-custom" hidden>
+          <div class="panel-heading">
+            <h3>添加自定义菜品</h3>
+          </div>
+          <form id="custom-food-form">
+            <label>
+              <span>菜名</span>
+              <input name="food-name" type="text" required maxlength="20" autocomplete="off">
+            </label>
+            <label>
+              <span>大类</span>
+              <select name="food-group" required>
+                <option value="">请选择</option>
+                <option>中餐</option>
+                <option>西餐</option>
+                <option>日料</option>
+                <option>韩餐</option>
+                <option>东南亚</option>
+                <option>快餐小吃</option>
+                <option>轻食甜品</option>
+              </select>
+            </label>
+            <label>
+              <span>餐次</span>
+              <select name="food-meal" required>
+                <option value="">请选择</option>
+                <option>早餐</option>
+                <option>午餐</option>
+                <option>晚餐</option>
+                <option>夜宵</option>
+              </select>
+            </label>
+            <label>
+              <span>口味</span>
+              <select name="food-flavor" required>
+                <option value="">请选择</option>
+                <option>想吃辣</option>
+                <option>清淡点</option>
+                <option>来点肉</option>
+                <option>吃点菜</option>
+                <option>想吃甜</option>
+              </select>
+            </label>
+            <label>
+              <span>消费意愿</span>
+              <select name="food-spend" required>
+                <option value="">请选择</option>
+                <option>简单吃</option>
+                <option>正常吃</option>
+                <option>吃顿好的</option>
+              </select>
+            </label>
+            <button class="button-primary form-submit" type="submit">添加到菜库</button>
+            <p id="custom-food-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+          </form>
+          <ul id="custom-foods" class="library-list"></ul>
+        </section>
+
+        <section id="panel-blocked" role="tabpanel" aria-labelledby="tab-blocked" hidden>
+          <div class="panel-heading">
+            <h3>暂时不要</h3>
+            <span>24 小时内</span>
+          </div>
+          <p class="empty-state">当前没有临时屏蔽的菜品。</p>
+          <ul id="blocked-foods" class="library-list"></ul>
+        </section>
+      </div>
+    </dialog>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

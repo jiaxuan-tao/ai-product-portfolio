@@ -1,0 +1,103 @@
+import assert from "node:assert/strict";
+import { existsSync, readFileSync } from "node:fs";
+import path from "node:path";
+import test from "node:test";
+import { fileURLToPath } from "node:url";
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const htmlPath = path.join(projectRoot, "index.html");
+const cssPath = path.join(projectRoot, "styles.css");
+const posterPath = path.join(projectRoot, "assets", "food-poster.jpg");
+const html = existsSync(htmlPath) ? readFileSync(htmlPath, "utf8") : "";
+const css = existsSync(cssPath) ? readFileSync(cssPath, "utf8") : "";
+
+test("application shell files and the local JPEG poster exist", () => {
+  assert.ok(existsSync(htmlPath), "index.html should exist");
+  assert.ok(existsSync(cssPath), "styles.css should exist");
+  assert.ok(existsSync(posterPath), "assets/food-poster.jpg should exist");
+});
+
+test("shell exposes the title, modes, filters, and stable Task 4 hooks", () => {
+  assert.match(html, /<title>今天吃什么<\/title>/);
+  assert.match(html, /<h1[^>]*>[\s\S]*今天吃什么[\s\S]*<\/h1>/);
+  assert.match(html, /id="mode-control"/);
+  assert.match(html, />\s*直接开转\s*</);
+  assert.match(html, />\s*按菜系选\s*</);
+
+  for (const id of [
+    "filter-meal",
+    "filter-flavor",
+    "filter-spend",
+    "wheel",
+    "spin-button",
+    "candidate-list",
+    "result-ticket",
+    "library-drawer",
+    "sound-toggle",
+  ]) {
+    assert.match(html, new RegExp(`id="${id}"`), `missing stable hook #${id}`);
+  }
+});
+
+test("wheel, path rail, candidate ticket, and status strip are semantically present", () => {
+  assert.match(html, /<nav[^>]*aria-label="选择路径"/);
+  assert.match(html, /<canvas[^>]*id="wheel"[^>]*>[\s\S]*浏览器不支持 Canvas[\s\S]*<\/canvas>/);
+  assert.match(html, /<section[^>]*aria-labelledby="candidate-heading"/);
+  assert.match(html, /id="candidate-list"/);
+  assert.match(html, /换一批候选/);
+  assert.match(html, /<footer[^>]*class="[^"]*status-strip[^"]*"/);
+  assert.match(html, /最近 3 次不重复/);
+});
+
+test("icon-only controls have accessible names and tooltips", () => {
+  for (const id of ["sound-toggle", "open-library", "close-library", "close-result"]) {
+    assert.match(
+      html,
+      new RegExp(`<button(?=[^>]*id="${id}")(?=[^>]*aria-label="[^"]+")(?=[^>]*title="[^"]+")[^>]*>`),
+      `#${id} should have aria-label and title`,
+    );
+  }
+});
+
+test("result ticket includes local artwork and every decision action", () => {
+  assert.match(html, /<dialog[^>]*id="result-ticket"/);
+  assert.match(html, /<img[^>]*src="assets\/food-poster\.jpg"/);
+  assert.match(html, /就吃这个菜系/);
+  assert.match(html, /继续选一道菜/);
+  assert.match(html, /暂时不要/);
+  assert.match(html, /再转一次/);
+  assert.match(html, /就吃这个/);
+});
+
+test("food library dialog includes four tabs and a complete custom-food form", () => {
+  assert.match(html, /<dialog[^>]*id="library-drawer"/);
+  assert.match(html, /role="tablist"/);
+  for (const tab of ["预设", "收藏", "自定义", "暂时不要"]) {
+    assert.match(html, new RegExp(`role="tab"[^>]*>[\\s\\S]*?${tab}`));
+  }
+
+  assert.match(html, /<form[^>]*id="custom-food-form"/);
+  assert.match(html, /name="food-name"/);
+  assert.match(html, /name="food-group"/);
+  assert.match(html, /name="food-meal"/);
+  assert.match(html, /name="food-flavor"/);
+  assert.match(html, /name="food-spend"/);
+  assert.match(html, /添加到菜库/);
+  assert.match(html, /role="status"/);
+});
+
+test("HTML uses only local runtime images, styles, scripts, and fonts", () => {
+  assert.doesNotMatch(html, /<(?:img|script|link)[^>]+(?:src|href)="https?:\/\//i);
+  assert.doesNotMatch(css, /url\(\s*["']?https?:\/\//i);
+  assert.doesNotMatch(css, /@import/i);
+});
+
+test("playful canteen CSS defines its grid, hard shadows, layout, and responsive safeguards", () => {
+  assert.match(css, /background-size:\s*18px 18px/);
+  assert.match(css, /grid-template-areas:[\s\S]*path[\s\S]*wheel[\s\S]*candidates/);
+  assert.match(css, /box-shadow:\s*[^;]*(?:--vermilion|--mustard)/);
+  assert.match(css, /overflow-x:\s*(?:clip|hidden)/);
+  assert.match(css, /@media\s*\(max-width:\s*(?:48rem|768px)\)/);
+  assert.match(css, /min-height:\s*44px/);
+  assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+});
