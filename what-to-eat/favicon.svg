@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="今天吃什么">
+  <rect width="64" height="64" rx="8" fill="#123f35"/>
+  <rect x="9" y="9" width="46" height="46" rx="4" fill="#c8422f" stroke="#fffaf0" stroke-width="3"/>
+  <text x="32" y="43" fill="#fffaf0" font-family="sans-serif" font-size="30" font-weight="700" text-anchor="middle">食</text>
+</svg>
