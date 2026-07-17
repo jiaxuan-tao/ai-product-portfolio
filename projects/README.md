@@ -10,6 +10,7 @@
 - [`prompt-manager/`](../prompt-manager/README.md)
 - [`poker-ev-coach/`](../poker-ev-coach/README.md)
 - [`quota-float-native/`](../quota-float-native/README.md)
+- [`what-to-eat/` What to Eat｜今天吃什么](../what-to-eat/README.md)
 
 ## Project Structure｜单个项目结构
 
