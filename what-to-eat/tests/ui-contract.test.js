@@ -7,9 +7,13 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const htmlPath = path.join(projectRoot, "index.html");
 const cssPath = path.join(projectRoot, "styles.css");
+const appPath = path.join(projectRoot, "app.js");
+const audioPath = path.join(projectRoot, "audio.js");
 const posterPath = path.join(projectRoot, "assets", "food-poster.jpg");
 const html = existsSync(htmlPath) ? readFileSync(htmlPath, "utf8") : "";
 const css = existsSync(cssPath) ? readFileSync(cssPath, "utf8") : "";
+const app = existsSync(appPath) ? readFileSync(appPath, "utf8") : "";
+const audio = existsSync(audioPath) ? readFileSync(audioPath, "utf8") : "";
 
 test("application shell files and the local JPEG poster exist", () => {
   assert.ok(existsSync(htmlPath), "index.html should exist");
@@ -100,4 +104,74 @@ test("playful canteen CSS defines its grid, hard shadows, layout, and responsive
   assert.match(css, /@media\s*\(max-width:\s*(?:48rem|768px)\)/);
   assert.match(css, /min-height:\s*44px/);
   assert.match(css, /@media\s*\(prefers-reduced-motion:\s*reduce\)/);
+});
+
+test("application module wires picker, storage, audio, animation, and secure randomness", () => {
+  assert.ok(existsSync(appPath), "app.js should exist");
+  assert.ok(existsSync(audioPath), "audio.js should exist");
+  assert.match(html, /<script\s+type="module"\s+src="app\.js"><\/script>/);
+  assert.match(app, /from\s+["']\.\/foods\.js["']/);
+  assert.match(app, /from\s+["']\.\/picker\.js["']/);
+  assert.match(app, /from\s+["']\.\/storage\.js["']/);
+  assert.match(app, /from\s+["']\.\/audio\.js["']/);
+  assert.match(app, /requestAnimationFrame/);
+  assert.match(app, /crypto\.getRandomValues/);
+  assert.match(app, /prefers-reduced-motion/);
+});
+
+test("result workflow handles every decision and moves focus to the result", () => {
+  for (const id of [
+    "accept-cuisine",
+    "continue-cuisine",
+    "block-result",
+    "reroll-result",
+    "accept-result",
+    "close-result",
+  ]) {
+    assert.match(app, new RegExp(`getElementById\\(["']${id}["']\\)`), `missing handler hook #${id}`);
+  }
+  assert.match(app, /resultName\.focus\(\)/);
+  assert.match(app, /showModal\(\)/);
+});
+
+test("library workflow persists custom foods, favorites, blocks, and saved combinations", () => {
+  assert.match(app, /custom-food-form/);
+  assert.match(app, /favorites/);
+  assert.match(app, /blockedUntil/);
+  assert.match(app, /savedCombinations/);
+  assert.match(app, /saveState\(/);
+  assert.match(app, /localStorage/);
+});
+
+test("library tabs implement roving tabindex and synchronized panels", () => {
+  assert.match(app, /ArrowLeft/);
+  assert.match(app, /ArrowRight/);
+  assert.match(app, /\.tabIndex\s*=/);
+  assert.match(app, /aria-selected/);
+  assert.match(app, /aria-controls/);
+});
+
+test("runtime normalizes legacy filter options and guards undersized candidate pools", () => {
+  assert.match(app, /来点硬菜/);
+  assert.match(app, /犒劳自己/);
+  assert.match(app, /availableCuisines/);
+  assert.match(app, /candidatePool\.length\s*<\s*2/);
+  assert.match(app, /放宽|减少筛选|候选不足/);
+});
+
+test("custom foods receive a stable cuisine and return to the wheel after loading", () => {
+  assert.match(app, /cuisine:\s*["']我的自定义["']/);
+  assert.match(app, /customFoods/);
+  assert.match(app, /FOODS[\s\S]*customFoods|customFoods[\s\S]*FOODS/);
+});
+
+test("audio controller is lazy, optional, and exposes synthesized tick and result sounds", () => {
+  assert.match(audio, /export function createAudioController/);
+  assert.match(audio, /AudioContext/);
+  assert.match(audio, /createOscillator/);
+  assert.match(audio, /createGain/);
+  assert.match(audio, /setEnabled/);
+  assert.match(audio, /tick/);
+  assert.match(audio, /result/);
+  assert.match(audio, /dispose/);
 });
