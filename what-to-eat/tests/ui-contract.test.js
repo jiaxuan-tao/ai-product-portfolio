@@ -139,6 +139,8 @@ test("library workflow persists custom foods, favorites, blocks, and saved combi
   assert.match(app, /favorites/);
   assert.match(app, /blockedUntil/);
   assert.match(app, /savedCombinations/);
+  assert.match(app, /normalizeSavedCombination/);
+  assert.match(app, /\.map\(normalizeSavedCombination\)/);
   assert.match(app, /saveState\(/);
   assert.match(app, /localStorage/);
 });

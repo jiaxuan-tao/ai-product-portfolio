@@ -6,6 +6,8 @@
 
 [🎡 在线体验](https://jiaxuan-tao.github.io/vibe-coding-lab/what-to-eat/) · [🧭 使用方法](#-使用方法) · [🔒 本地隐私](#-本地隐私)
 
+![今天吃什么桌面端转盘界面](docs/images/what-to-eat-preview.png)
+
 ---
 
 ## 🎯 它解决什么问题

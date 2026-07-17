@@ -37,9 +37,12 @@ export function buildHierarchyOptions(foods, path = []) {
 
   const [group, cuisine] = path;
   if (!cuisine) {
+    const availableCuisines = [
+      ...new Set(foods.filter((food) => food.group === group).map((food) => food.cuisine)),
+    ];
     const cuisines = group === "中餐"
-      ? CHINESE_CUISINES
-      : [...new Set(foods.filter((food) => food.group === group).map((food) => food.cuisine))];
+      ? [...CHINESE_CUISINES, ...availableCuisines.filter((name) => !CHINESE_CUISINES.includes(name))]
+      : availableCuisines;
     return cuisines.map((name) => ({ id: `${group}:${name}`, name, type: "cuisine", group }));
   }
 

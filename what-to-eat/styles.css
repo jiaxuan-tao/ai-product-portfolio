@@ -20,12 +20,11 @@
 }
 
 html {
-  min-width: 320px;
   background-color: var(--rice);
 }
 
 body {
-  min-width: 320px;
+  min-width: 0;
   min-height: 100vh;
   min-height: 100svh;
   margin: 0;

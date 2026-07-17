@@ -120,6 +120,23 @@ test("buildHierarchyOptions returns the nine Chinese sub-cuisines", () => {
   );
 });
 
+test("buildHierarchyOptions keeps custom Chinese cuisines reachable", () => {
+  const options = buildHierarchyOptions([
+    ...FOODS,
+    {
+      id: "custom-noodles",
+      name: "家传拌面",
+      group: "中餐",
+      cuisine: "我的自定义",
+      meals: ["晚餐"],
+      flavors: ["清淡点"],
+      spends: ["简单吃"],
+    },
+  ], ["中餐"]);
+
+  assert.deepEqual(options.map((option) => option.name), [...CHINESE_CUISINES, "我的自定义"]);
+});
+
 test("buildHierarchyOptions returns matching dishes at a complete path", () => {
   const options = buildHierarchyOptions(FOODS, ["中餐", "广西风味"]);
 

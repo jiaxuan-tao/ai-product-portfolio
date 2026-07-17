@@ -75,11 +75,44 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const audio = createAudioController({ enabled: coreState.soundEnabled });
 const wheelContext = elements.wheel.getContext("2d");
 
+function normalizeSavedCombination(item, index) {
+  if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+
+  const filters = {
+    meal: ["不限", "早餐", "午餐", "晚餐", "夜宵"].includes(item.filters?.meal)
+      ? item.filters.meal
+      : "不限",
+    flavor: ["不限", "想吃辣", "清淡点", "来点硬菜", "想吃甜"].includes(item.filters?.flavor)
+      ? item.filters.flavor
+      : "不限",
+    spend: ["不限", "简单吃", "正常吃", "犒劳自己"].includes(item.filters?.spend)
+      ? item.filters.spend
+      : "不限",
+  };
+  const path = Array.isArray(item.path)
+    ? item.path.filter((value) => typeof value === "string" && value.trim()).slice(0, 2)
+    : [];
+  const name = typeof item.name === "string" && item.name.trim()
+    ? item.name.trim()
+    : combinationLabel(filters, path);
+
+  return {
+    id: typeof item.id === "string" && item.id.trim() ? item.id.trim() : `saved-${index}`,
+    name,
+    mode: item.mode === "cuisine" ? "cuisine" : "direct",
+    filters,
+    path,
+  };
+}
+
 function loadUiState() {
   try {
     const parsed = JSON.parse(window.localStorage.getItem(UI_STORAGE_KEY) || "{}");
     const savedCombinations = Array.isArray(parsed.savedCombinations)
-      ? parsed.savedCombinations.filter((item) => item && typeof item === "object").slice(0, 12)
+      ? parsed.savedCombinations
+        .map(normalizeSavedCombination)
+        .filter(Boolean)
+        .slice(0, 12)
       : [];
     return {
       mode: parsed.mode === "cuisine" ? "cuisine" : "direct",
