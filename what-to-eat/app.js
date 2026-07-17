@@ -1,4 +1,4 @@
-import { FOODS } from "./foods.js";
+import { FOODS, OPTIONAL_FOREIGN_CUISINES } from "./foods.js";
 import {
   createCandidatePool,
   createHierarchyCandidates,
@@ -11,7 +11,10 @@ import {
   saveState,
 } from "./storage.js";
 import { createAudioController } from "./audio.js";
-import { renderFoodArtwork } from "./food-art.js";
+import {
+  normalizeLegacyCustomTaxonomy,
+  normalizeLegacyHierarchyPath,
+} from "./migration.js";
 import {
   enhanceSelects,
   syncEnhancedSelects,
@@ -24,6 +27,7 @@ const WHEEL_COLORS = ["#c8422f", "#d9a321", "#2d6f88", "#fffaf0", "#82a68b"];
 
 const elements = {
   modeControl: document.getElementById("mode-control"),
+  directionControl: document.getElementById("direction-control"),
   meal: document.getElementById("filter-meal"),
   flavor: document.getElementById("filter-flavor"),
   spend: document.getElementById("filter-spend"),
@@ -33,8 +37,6 @@ const elements = {
   stageCount: document.getElementById("stage-count"),
   wheelHeading: document.getElementById("wheel-heading"),
   candidateList: document.getElementById("candidate-list"),
-  candidateCount: document.getElementById("candidate-count"),
-  filterSummary: document.getElementById("filter-summary"),
   refresh: document.getElementById("refresh-candidates"),
   saveCombination: document.getElementById("save-combination"),
   ticketDate: document.getElementById("ticket-date"),
@@ -51,10 +53,9 @@ const elements = {
   resultCategory: document.getElementById("result-category"),
   resultArt: document.getElementById("result-art"),
   resultTags: document.getElementById("result-tags"),
-  resultTime: document.getElementById("result-time"),
   cuisineActions: document.getElementById("cuisine-result-actions"),
   foodActions: document.getElementById("food-result-actions"),
-  acceptCuisine: document.getElementById("accept-cuisine"),
+  restartCuisine: document.getElementById("restart-cuisine"),
   continueCuisine: document.getElementById("continue-cuisine"),
   blockResult: document.getElementById("block-result"),
   rerollResult: document.getElementById("reroll-result"),
@@ -66,12 +67,13 @@ const elements = {
   favoriteCount: document.getElementById("favorite-count"),
   customFoods: document.getElementById("custom-foods"),
   blockedFoods: document.getElementById("blocked-foods"),
+  optionalCuisines: document.getElementById("optional-cuisines"),
 };
 
 let coreState = loadState(window.localStorage);
 let uiState = loadUiState();
 let mode = uiState.mode;
-let hierarchyPath = [];
+let hierarchyPath = mode === "cuisine" ? [uiState.direction] : [];
 let candidatePool = [];
 let selectedResult = null;
 let currentRotation = 0;
@@ -97,9 +99,7 @@ function normalizeSavedCombination(item, index) {
       ? item.filters.spend
       : "不限",
   };
-  const path = Array.isArray(item.path)
-    ? item.path.filter((value) => typeof value === "string" && value.trim()).slice(0, 2)
-    : [];
+  const path = normalizeLegacyHierarchyPath(item.path);
   const name = typeof item.name === "string" && item.name.trim()
     ? item.name.trim()
     : combinationLabel(filters, path);
@@ -124,10 +124,11 @@ function loadUiState() {
       : [];
     return {
       mode: parsed.mode === "cuisine" ? "cuisine" : "direct",
+      direction: parsed.direction === "外国菜" ? "外国菜" : "中餐",
       savedCombinations,
     };
   } catch {
-    return { mode: "direct", savedCombinations: [] };
+    return { mode: "direct", direction: "中餐", savedCombinations: [] };
   }
 }
 
@@ -135,6 +136,7 @@ function saveUiState() {
   try {
     window.localStorage.setItem(UI_STORAGE_KEY, JSON.stringify({
       mode,
+      direction: uiState.direction,
       savedCombinations: uiState.savedCombinations,
     }));
   } catch {
@@ -155,10 +157,15 @@ function inferMeal() {
 }
 
 function normalizeCustomFood(food) {
+  const { origin, cuisine } = normalizeLegacyCustomTaxonomy(food);
   return {
     ...food,
-    group: food.group || "快餐小吃",
-    cuisine: food.cuisine || "我的自定义",
+    origin,
+    group: origin,
+    cuisine,
+    category: food.category || "我的自定义",
+    availability: "default",
+    image: food.image || "assets/food-poster.jpg",
     meals: food.meals?.length ? [...food.meals] : ["午餐", "晚餐"],
     flavors: food.flavors?.length ? [...food.flavors] : ["来点硬菜"],
     spends: food.spends?.length ? [...food.spends] : ["正常吃"],
@@ -264,9 +271,8 @@ function currentExclusions() {
 }
 
 function describeCandidate(item) {
-  if (item.type === "group") return "大类";
-  if (item.type === "cuisine") return item.group;
-  return `${item.cuisine} · ${item.group}`;
+  if (item.type === "cuisine") return item.origin;
+  return `${item.cuisine} · ${item.origin}`;
 }
 
 function refreshCandidatePool() {
@@ -277,6 +283,7 @@ function refreshCandidatePool() {
       filters: currentFilters(),
       exclusions: currentExclusions(),
       limit: 12,
+      enabledOptionalCuisines: coreState.enabledOptionalCuisines,
     })
     : createHierarchyCandidates({
       foods,
@@ -284,6 +291,7 @@ function refreshCandidatePool() {
       filters: currentFilters(),
       exclusions: currentExclusions(),
       limit: 12,
+      enabledOptionalCuisines: coreState.enabledOptionalCuisines,
     });
 
   renderCandidates();
@@ -307,7 +315,6 @@ function renderCandidates() {
 
   const count = candidatePool.length;
   elements.stageCount.textContent = String(count);
-  elements.candidateCount.textContent = String(count);
   const today = new Date();
   elements.ticketDate.textContent = `${today.getMonth() + 1}月${today.getDate()}日`;
   elements.ticketDate.dateTime = [
@@ -317,13 +324,13 @@ function renderCandidates() {
   ].join("-");
 
   const filters = currentFilters();
-  elements.filterSummary.textContent = [filters.meal, filters.flavor, filters.spend].join(" · ");
 
-  if (candidatePool.length < 2) {
+  if (candidatePool.length === 0) {
     elements.spin.disabled = true;
-    elements.feedback.textContent = candidatePool.length === 0
-      ? "候选不足，请放宽或减少筛选条件"
-      : "只有 1 个候选，请放宽筛选后再转";
+    elements.feedback.textContent = "候选不足，请放宽或减少筛选条件";
+  } else if (candidatePool.length === 1) {
+    elements.spin.disabled = false;
+    elements.feedback.textContent = "只有 1 个候选，点击开转直接确认";
   } else {
     elements.spin.disabled = false;
     elements.feedback.textContent = `${count} 个候选已备好`;
@@ -331,8 +338,6 @@ function renderCandidates() {
 
   if (mode === "direct") {
     elements.wheelHeading.textContent = `${filters.meal === "不限" ? "今日" : filters.meal}转盘`;
-  } else if (hierarchyPath.length === 0) {
-    elements.wheelHeading.textContent = "先选一个大类";
   } else if (hierarchyPath.length === 1) {
     elements.wheelHeading.textContent = `${hierarchyPath[0]} · 选菜系`;
   } else {
@@ -343,10 +348,10 @@ function renderCandidates() {
 function appendPathStep(index, label, state, depth) {
   const item = document.createElement("li");
   item.className = `is-${state}`;
-  if (state === "current") {
+  if (state === "current" || state === "selected") {
     const current = document.createElement("div");
-    current.className = "path-current";
-    current.setAttribute("aria-current", "step");
+    current.className = state === "current" ? "path-current" : "path-selected";
+    if (state === "current") current.setAttribute("aria-current", "step");
     const number = document.createElement("span");
     number.textContent = String(index).padStart(2, "0");
     current.append(number, document.createTextNode(label));
@@ -379,7 +384,7 @@ function renderPath() {
     return;
   }
 
-  appendPathStep(1, hierarchyPath[0] || "全部大类", hierarchyPath.length === 0 ? "current" : "complete", 0);
+  appendPathStep(1, hierarchyPath[0], "selected", 1);
   appendPathStep(
     2,
     hierarchyPath[1] || "具体菜系",
@@ -480,24 +485,41 @@ function easeOutQuint(progress) {
   return 1 - ((1 - progress) ** 5);
 }
 
+function setSpinControlsDisabled(disabled) {
+  [
+    ...elements.modeControl.querySelectorAll("input"),
+    ...elements.directionControl.querySelectorAll("input"),
+    elements.meal,
+    elements.flavor,
+    elements.spend,
+    elements.refresh,
+    elements.openLibrary,
+    ...elements.pathList.querySelectorAll("button"),
+  ].forEach((control) => {
+    control.disabled = disabled;
+  });
+  elements.spin.disabled = disabled || candidatePool.length === 0;
+  syncEnhancedSelects(document);
+}
+
 function startSpin() {
-  if (isSpinning || candidatePool.length < 2) return;
+  if (isSpinning || candidatePool.length === 0) return;
+  const spinCandidates = [...candidatePool];
 
   let selectedIndex;
   try {
-    selectedIndex = secureIndex(candidatePool.length);
+    selectedIndex = secureIndex(spinCandidates.length);
   } catch (error) {
     elements.feedback.textContent = error.message;
     return;
   }
 
-  selectedResult = candidatePool[selectedIndex];
+  selectedResult = spinCandidates[selectedIndex];
   isSpinning = true;
-  elements.spin.disabled = true;
-  elements.refresh.disabled = true;
+  setSpinControlsDisabled(true);
   elements.feedback.textContent = "转盘正在选菜…";
 
-  const arc = TAU / candidatePool.length;
+  const arc = TAU / spinCandidates.length;
   const normalizedCurrent = ((currentRotation % TAU) + TAU) % TAU;
   const selectedCenter = ((-(selectedIndex + 0.5) * arc) % TAU + TAU) % TAU;
   const forwardOffset = (selectedCenter - normalizedCurrent + TAU) % TAU;
@@ -515,7 +537,7 @@ function startSpin() {
       audio.tick();
       lastBoundary = boundary;
     }
-    drawWheel(candidatePool, rotation);
+    drawWheel(spinCandidates, rotation);
 
     if (progress < 1) {
       requestAnimationFrame(animate);
@@ -523,10 +545,9 @@ function startSpin() {
     }
 
     currentRotation = selectedCenter;
-    drawWheel(candidatePool, currentRotation);
+    drawWheel(spinCandidates, currentRotation);
     isSpinning = false;
-    elements.refresh.disabled = false;
-    elements.spin.disabled = false;
+    setSpinControlsDisabled(false);
     elements.feedback.textContent = `转到了：${selectedResult.name}`;
     audio.result();
     showResult(selectedResult);
@@ -536,8 +557,7 @@ function startSpin() {
 }
 
 function resultTags(item) {
-  if (item.type === "group") return ["大类", "继续可细分菜系"];
-  if (item.type === "cuisine") return [item.group, "继续可选择具体菜品"];
+  if (item.type === "cuisine") return [item.origin, "下一步选择具体菜品"];
   return [
     item.meals?.[0] || "用餐",
     item.flavors?.[0] || "口味不限",
@@ -546,19 +566,15 @@ function resultTags(item) {
 }
 
 function showResult(item) {
-  const isCategory = item.type === "group" || item.type === "cuisine";
+  const isCategory = item.type === "cuisine";
   elements.resultName.textContent = item.name;
   elements.resultCategory.textContent = isCategory
-    ? (item.group || "菜系大类")
-    : `${item.cuisine} · ${item.group}`;
-  const now = new Date();
-  elements.resultTime.textContent = new Intl.DateTimeFormat("zh-CN", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(now);
-  elements.resultTime.dateTime = now.toISOString();
-  renderFoodArtwork(elements.resultArt, item);
+    ? `${item.name} · ${item.origin}`
+    : `${item.cuisine} · ${item.origin}`;
+  elements.resultArt.src = item.image || "assets/food-poster.jpg";
+  elements.resultArt.alt = isCategory
+    ? `${item.name}代表菜拼盘`
+    : `${item.name}菜品图`;
   elements.resultTags.replaceChildren(...resultTags(item).map((tag) => {
     const listItem = document.createElement("li");
     listItem.textContent = tag;
@@ -577,21 +593,19 @@ function closeResultDialog() {
 }
 
 function continueFromCategory() {
-  if (!selectedResult) return;
-  if (selectedResult.type === "group") {
-    hierarchyPath = [selectedResult.name];
-  } else if (selectedResult.type === "cuisine") {
-    hierarchyPath = [selectedResult.group, selectedResult.name];
-  }
+  if (selectedResult?.type !== "cuisine") return;
+  hierarchyPath = [selectedResult.origin, selectedResult.name];
   closeResultDialog();
   refreshCandidatePool();
   elements.spin.focus();
 }
 
-function acceptCategory() {
-  if (!selectedResult) return;
-  elements.feedback.textContent = `今天就吃：${selectedResult.name}`;
+function restartCuisineSelection() {
+  if (selectedResult?.type !== "cuisine") return;
   closeResultDialog();
+  currentRotation = 0;
+  refreshCandidatePool();
+  elements.spin.focus();
 }
 
 function acceptSelectedFood() {
@@ -617,7 +631,7 @@ function blockSelectedFood() {
   closeResultDialog();
   refreshCandidatePool();
   renderLibrary();
-  if (candidatePool.length >= 2) {
+  if (candidatePool.length > 0) {
     window.setTimeout(() => elements.spin.click(), reducedMotion.matches ? 20 : 140);
   }
 }
@@ -625,7 +639,17 @@ function blockSelectedFood() {
 function setMode(nextMode) {
   mode = nextMode === "cuisine" ? "cuisine" : "direct";
   uiState.mode = mode;
-  hierarchyPath = [];
+  hierarchyPath = mode === "cuisine" ? [uiState.direction] : [];
+  elements.directionControl.hidden = mode !== "cuisine";
+  currentRotation = 0;
+  saveUiState();
+  refreshCandidatePool();
+}
+
+function setDirection(direction) {
+  if (!["中餐", "外国菜"].includes(direction)) return;
+  uiState.direction = direction;
+  hierarchyPath = [direction];
   currentRotation = 0;
   saveUiState();
   refreshCandidatePool();
@@ -685,6 +709,10 @@ function renderLibrary() {
   const favoriteIds = new Set(coreState.favorites);
   const favorites = coreState.favorites.map((id) => foodById.get(id)).filter(Boolean);
   const blocked = Object.keys(coreState.blockedUntil).map((id) => foodById.get(id)).filter(Boolean);
+
+  elements.optionalCuisines.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+    checkbox.checked = coreState.enabledOptionalCuisines.includes(checkbox.value);
+  });
 
   elements.presetFoods.replaceChildren(...allFoods.map((food) => (
     createLibraryRow(food, "favorite", favoriteIds.has(food.id))
@@ -767,12 +795,14 @@ function addCustomFood(event) {
   const food = {
     id: `custom-${suffix}`,
     name,
+    origin: String(formData.get("food-group")),
     group: String(formData.get("food-group")),
     cuisine: "我的自定义",
     meals: [String(formData.get("food-meal"))],
     flavors: [String(formData.get("food-flavor"))],
     spends: [String(formData.get("food-spend"))],
     visual: "dish",
+    image: "assets/food-poster.jpg",
   };
   coreState = { ...coreState, customFoods: [food, ...coreState.customFoods] };
   persistCoreState();
@@ -876,9 +906,26 @@ function applyCombination(id) {
   if (!combination) return;
   mode = combination.mode === "cuisine" ? "cuisine" : "direct";
   uiState.mode = mode;
-  hierarchyPath = Array.isArray(combination.path) ? combination.path.slice(0, 2) : [];
+  hierarchyPath = mode === "cuisine"
+    ? (Array.isArray(combination.path) && combination.path.length
+      ? combination.path.slice(0, 2)
+      : [uiState.direction])
+    : [];
+  if (mode === "cuisine") uiState.direction = hierarchyPath[0];
+  const savedCuisine = hierarchyPath[1];
+  if (
+    OPTIONAL_FOREIGN_CUISINES.includes(savedCuisine)
+    && !coreState.enabledOptionalCuisines.includes(savedCuisine)
+  ) {
+    coreState = {
+      ...coreState,
+      enabledOptionalCuisines: [...coreState.enabledOptionalCuisines, savedCuisine],
+    };
+  }
   coreState = { ...coreState, filters: { ...combination.filters } };
   document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
+  document.querySelector(`input[name="direction"][value="${uiState.direction}"]`).checked = true;
+  elements.directionControl.hidden = mode !== "cuisine";
   elements.meal.value = combination.filters.meal === "不限" ? "" : combination.filters.meal;
   elements.flavor.value = combination.filters.flavor === "不限" ? "" : combination.filters.flavor;
   elements.spend.value = combination.filters.spend === "不限" ? "" : combination.filters.spend;
@@ -896,6 +943,9 @@ function bindEvents() {
   elements.modeControl.addEventListener("change", (event) => {
     if (event.target.name === "mode") setMode(event.target.value);
   });
+  elements.directionControl.addEventListener("change", (event) => {
+    if (event.target.name === "direction") setDirection(event.target.value);
+  });
   [elements.meal, elements.flavor, elements.spend].forEach((select) => {
     select.addEventListener("change", updateFilters);
   });
@@ -910,7 +960,7 @@ function bindEvents() {
   });
 
   elements.sound.addEventListener("click", () => setSoundEnabled(!coreState.soundEnabled));
-  elements.acceptCuisine.addEventListener("click", acceptCategory);
+  elements.restartCuisine.addEventListener("click", restartCuisineSelection);
   elements.continueCuisine.addEventListener("click", continueFromCategory);
   elements.blockResult.addEventListener("click", blockSelectedFood);
   elements.rerollResult.addEventListener("click", rerollSelectedFood);
@@ -932,6 +982,18 @@ function bindEvents() {
     libraryInvoker?.focus();
   });
   elements.customForm.addEventListener("submit", addCustomFood);
+  elements.optionalCuisines.addEventListener("change", (event) => {
+    if (event.target.type !== "checkbox") return;
+    coreState = {
+      ...coreState,
+      enabledOptionalCuisines: [...elements.optionalCuisines.querySelectorAll('input[type="checkbox"]:checked')]
+        .map((checkbox) => checkbox.value),
+    };
+    persistCoreState();
+    renderLibrary();
+    currentRotation = 0;
+    refreshCandidatePool();
+  });
   [elements.presetFoods, elements.customFoods, elements.blockedFoods].forEach((list) => {
     list.addEventListener("click", handleLibraryAction);
   });
@@ -950,6 +1012,13 @@ function initialize() {
   setupLibraryTabs();
   bindEvents();
   document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
+  document.querySelector(`input[name="direction"][value="${uiState.direction}"]`).checked = true;
+  elements.directionControl.hidden = mode !== "cuisine";
+  elements.resultArt.addEventListener("error", () => {
+    if (!elements.resultArt.src.endsWith("/assets/food-poster.jpg")) {
+      elements.resultArt.src = "assets/food-poster.jpg";
+    }
+  });
   setSoundEnabled(coreState.soundEnabled);
   refreshCandidatePool();
 }

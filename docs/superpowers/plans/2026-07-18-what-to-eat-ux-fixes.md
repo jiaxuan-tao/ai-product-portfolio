@@ -1,5 +1,8 @@
 # What to Eat UX Fixes Implementation Plan
 
+> 后续分类与图片实现已由 `2026-07-18-what-to-eat-china-taxonomy.md`
+> 取代，本文件保留为上一轮修复记录。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
 **Goal:** 修复用户反馈的八项布局、交互、分类和结果视觉问题，并保持纯前端、无外部运行时资源。

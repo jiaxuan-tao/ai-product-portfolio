@@ -1,39 +1,120 @@
-export const TOP_LEVEL_GROUPS = Object.freeze([
-  "中餐",
-  "西餐",
-  "日料",
-  "韩餐",
-  "东南亚",
-  "快餐小吃",
-  "轻食甜品",
-]);
+export const DIRECTIONS = Object.freeze(["中餐", "外国菜"]);
 
 export const CHINESE_CUISINES = Object.freeze([
   "川湘菜",
   "粤菜",
   "江浙菜",
-  "北方菜",
+  "东北菜",
   "西北菜",
   "云贵菜",
   "广西风味",
   "火锅烧烤",
-  "面食",
+  "粉面米线",
+  "中式小吃",
+  "中式甜品",
+]);
+
+export const DEFAULT_FOREIGN_CUISINES = Object.freeze(["日料", "韩餐", "西餐"]);
+
+export const OPTIONAL_FOREIGN_CUISINES = Object.freeze([
+  "泰国菜",
+  "越南菜",
+  "东南亚其他",
+  "印度菜",
+  "墨西哥菜",
+  "中东菜",
 ]);
 
 const mealTags = Object.freeze(["午餐", "晚餐"]);
 const normalSpend = Object.freeze(["正常吃"]);
 
+const chineseSnackIds = new Set(["egg-tart", "jianbing", "stinky-tofu"]);
+const chineseDessertIds = new Set(["mango-pudding", "red-bean-shaved-ice", "fruit-platter"]);
+
+function resolveTaxonomy(id, legacyGroup, legacyCuisine) {
+  if (legacyGroup === "中餐") {
+    const cuisine = {
+      北方菜: "东北菜",
+      面食: "粉面米线",
+    }[legacyCuisine] || legacyCuisine;
+    return { origin: "中餐", cuisine, category: legacyCuisine, availability: "default" };
+  }
+
+  if (legacyGroup === "日料" || legacyGroup === "韩餐" || legacyGroup === "西餐") {
+    return {
+      origin: "外国菜",
+      cuisine: legacyGroup,
+      category: legacyCuisine,
+      availability: "default",
+    };
+  }
+
+  if (legacyGroup === "东南亚") {
+    const cuisine = ["泰国菜", "越南菜"].includes(legacyCuisine)
+      ? legacyCuisine
+      : "东南亚其他";
+    return { origin: "外国菜", cuisine, category: legacyCuisine, availability: "optional" };
+  }
+
+  if (legacyGroup === "快餐小吃") {
+    if (chineseSnackIds.has(id)) {
+      return {
+        origin: "中餐",
+        cuisine: "中式小吃",
+        category: legacyCuisine,
+        availability: "default",
+      };
+    }
+    if (id === "tacos") {
+      return {
+        origin: "外国菜",
+        cuisine: "墨西哥菜",
+        category: legacyCuisine,
+        availability: "optional",
+      };
+    }
+    return {
+      origin: "外国菜",
+      cuisine: "西餐",
+      category: legacyCuisine,
+      availability: "default",
+    };
+  }
+
+  if (legacyGroup === "轻食甜品" && chineseDessertIds.has(id)) {
+    return {
+      origin: "中餐",
+      cuisine: "中式甜品",
+      category: legacyCuisine,
+      availability: "default",
+    };
+  }
+
+  return {
+    origin: "外国菜",
+    cuisine: "西餐",
+    category: legacyCuisine,
+    availability: "default",
+  };
+}
+
 function createFood(id, name, group, cuisine, overrides = {}) {
+  const { taxonomy: taxonomyOverride = {}, ...foodOverrides } = overrides;
+  const taxonomy = {
+    ...resolveTaxonomy(id, group, cuisine),
+    ...taxonomyOverride,
+  };
   return Object.freeze({
     id,
     name,
-    group,
-    cuisine,
-    ...overrides,
-    meals: Object.freeze([...(overrides.meals ?? mealTags)]),
-    flavors: Object.freeze([...(overrides.flavors ?? ["来点硬菜"])]),
-    spends: Object.freeze([...(overrides.spends ?? normalSpend)]),
-    visual: overrides.visual ?? "dish",
+    ...foodOverrides,
+    ...taxonomy,
+    group: taxonomy.origin,
+    meals: Object.freeze([...(foodOverrides.meals ?? mealTags)]),
+    flavors: Object.freeze([...(foodOverrides.flavors ?? ["来点硬菜"])]),
+    spends: Object.freeze([...(foodOverrides.spends ?? normalSpend)]),
+    visual: foodOverrides.visual ?? "dish",
+    image: `assets/dishes/${id}.webp`,
   });
 }
 
@@ -137,6 +218,52 @@ export const FOODS = Object.freeze([
   createFood("mango-pudding", "芒果布丁", "轻食甜品", "甜品", { meals: ["下午茶", "夜宵"], flavors: ["想吃甜"], spends: ["简单吃"], visual: "dessert" }),
   createFood("red-bean-shaved-ice", "红豆刨冰", "轻食甜品", "甜品", { meals: ["下午茶"], flavors: ["想吃甜", "清淡点"], spends: ["简单吃"], visual: "dessert" }),
   createFood("fruit-platter", "鲜切水果盘", "轻食甜品", "水果", { meals: ["早餐", "下午茶", "夜宵"], flavors: ["清淡点", "想吃甜"], spends: ["简单吃"], visual: "fruit" }),
+
+  createFood("butter-chicken", "黄油咖喱鸡", "外国菜", "印度菜", {
+    flavors: ["来点硬菜"],
+    visual: "curry",
+    taxonomy: { origin: "外国菜", cuisine: "印度菜", category: "咖喱", availability: "optional" },
+  }),
+  createFood("palak-paneer", "菠菜芝士咖喱", "外国菜", "印度菜", {
+    flavors: ["清淡点"],
+    visual: "curry",
+    taxonomy: { origin: "外国菜", cuisine: "印度菜", category: "咖喱", availability: "optional" },
+  }),
+  createFood("chicken-biryani", "印度香料鸡肉饭", "外国菜", "印度菜", {
+    flavors: ["来点硬菜"],
+    visual: "rice",
+    taxonomy: { origin: "外国菜", cuisine: "印度菜", category: "香料饭", availability: "optional" },
+  }),
+  createFood("beef-tacos", "牛肉塔可", "外国菜", "墨西哥菜", {
+    flavors: ["想吃辣", "来点硬菜"],
+    visual: "taco",
+    taxonomy: { origin: "外国菜", cuisine: "墨西哥菜", category: "塔可", availability: "optional" },
+  }),
+  createFood("chicken-quesadilla", "鸡肉芝士薄饼", "外国菜", "墨西哥菜", {
+    flavors: ["来点硬菜"],
+    visual: "taco",
+    taxonomy: { origin: "外国菜", cuisine: "墨西哥菜", category: "薄饼", availability: "optional" },
+  }),
+  createFood("mexican-burrito-bowl", "墨西哥卷饼碗", "外国菜", "墨西哥菜", {
+    flavors: ["想吃辣", "来点硬菜"],
+    visual: "bowl",
+    taxonomy: { origin: "外国菜", cuisine: "墨西哥菜", category: "主食", availability: "optional" },
+  }),
+  createFood("chicken-shawarma", "鸡肉沙威玛", "外国菜", "中东菜", {
+    flavors: ["来点硬菜"],
+    visual: "sandwich",
+    taxonomy: { origin: "外国菜", cuisine: "中东菜", category: "烤肉", availability: "optional" },
+  }),
+  createFood("falafel-platter", "炸鹰嘴豆饼拼盘", "外国菜", "中东菜", {
+    flavors: ["清淡点"],
+    visual: "fresh",
+    taxonomy: { origin: "外国菜", cuisine: "中东菜", category: "素食", availability: "optional" },
+  }),
+  createFood("lamb-kebab-rice", "中东烤羊肉饭", "外国菜", "中东菜", {
+    flavors: ["来点硬菜"],
+    visual: "skewers",
+    taxonomy: { origin: "外国菜", cuisine: "中东菜", category: "烤肉", availability: "optional" },
+  }),
 ]);
 
 export function getFoodById(id) {

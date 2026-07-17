@@ -1370,7 +1370,8 @@ body {
 
 .path-rail button,
 .path-rail li > span,
-.path-current {
+.path-current,
+.path-selected {
   display: flex;
   width: 100%;
   min-height: 44px;
@@ -1386,6 +1387,13 @@ body {
   border: 2px solid var(--ink);
   border-radius: 4px;
   background: var(--vermilion);
+}
+
+.path-selected {
+  color: var(--ink-deep);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--mustard);
 }
 
 .path-back {
@@ -1657,7 +1665,8 @@ body {
 
   .path-rail button,
   .path-rail li > span,
-  .path-current {
+  .path-current,
+  .path-selected {
     min-height: 44px;
     justify-content: center;
     padding: 3px 5px;
@@ -1844,5 +1853,291 @@ body {
 @media (max-width: 48rem) and (max-height: 44rem) {
   .wheel-wrap {
     --wheel-size: min(calc(100vw - 32px), calc(100dvh - 520px), 270px);
+  }
+}
+
+/* China-market taxonomy and final interaction pass */
+.app-shell {
+  grid-template-rows: 64px 62px minmax(0, 1fr);
+}
+
+.wheel-stage {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+}
+
+.stage-heading {
+  grid-row: 1;
+}
+
+.direction-control {
+  z-index: 3;
+  display: grid;
+  width: min(100%, 260px);
+  min-width: 0;
+  padding: 3px;
+  margin: 12px 0 4px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  background: var(--paper);
+  box-shadow: 4px 4px 0 var(--mustard);
+  grid-row: 2;
+}
+
+.direction-control[hidden] {
+  display: none;
+}
+
+.direction-control label {
+  position: relative;
+  min-width: 0;
+}
+
+.direction-control input {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 1px;
+  min-height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.direction-control span {
+  display: grid;
+  min-height: 36px;
+  place-items: center;
+  color: var(--ink-deep);
+  border: 0;
+  font-size: 0.78rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.direction-control input:checked + span {
+  color: var(--rice);
+  background: var(--vermilion);
+}
+
+.direction-control input:focus-visible + span {
+  outline: 3px solid var(--mustard);
+  outline-offset: 2px;
+}
+
+.mode-control input:disabled + span,
+.direction-control input:disabled + span {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+.wheel-wrap {
+  --wheel-size: min(100%, calc(100dvh - 320px), 590px);
+  grid-row: 3;
+}
+
+.wheel-feedback {
+  align-self: start;
+  grid-row: 4;
+}
+
+.chopstick-pointer {
+  top: -34px;
+  width: 52px;
+  height: 92px;
+  filter: drop-shadow(4px 4px 0 var(--vermilion));
+}
+
+.chopstick-pointer span {
+  top: 0;
+  width: 14px;
+  height: 86px;
+  border: 3px solid var(--ink-deep);
+  border-radius: 3px 3px 10px 10px;
+  background:
+    linear-gradient(
+      to bottom,
+      var(--vermilion) 0 18px,
+      var(--rice) 18px 100%
+    );
+}
+
+.chopstick-pointer span:first-child {
+  left: 9px;
+  rotate: -7deg;
+}
+
+.chopstick-pointer span:last-child {
+  right: 9px;
+  rotate: 7deg;
+}
+
+.result-visual img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+
+.cuisine-manager {
+  padding: 12px;
+  margin-bottom: 18px;
+  border: 2px solid var(--ink);
+  background: var(--rice);
+  box-shadow: 4px 4px 0 var(--mustard);
+}
+
+.cuisine-manager .panel-heading {
+  padding-bottom: 8px;
+}
+
+.cuisine-manager .panel-heading p {
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.cuisine-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.cuisine-toggle-grid label {
+  position: relative;
+  min-width: 0;
+}
+
+.cuisine-toggle-grid input {
+  position: absolute;
+  opacity: 0;
+}
+
+.cuisine-toggle-grid span {
+  display: grid;
+  min-height: 40px;
+  padding: 5px 8px;
+  place-items: center;
+  border: 2px solid var(--ink);
+  background: var(--paper);
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-align: center;
+  cursor: pointer;
+}
+
+.cuisine-toggle-grid input:checked + span {
+  color: var(--rice);
+  background: var(--ink);
+  box-shadow: 3px 3px 0 var(--vermilion);
+}
+
+.cuisine-toggle-grid input:focus-visible + span {
+  outline: 3px solid var(--mustard);
+  outline-offset: 2px;
+}
+
+@media (max-width: 68rem) {
+  .app-shell {
+    grid-template-rows: 64px 62px minmax(0, 1fr);
+  }
+
+  .wheel-wrap {
+    --wheel-size: min(100%, calc(100dvh - 320px), 490px);
+  }
+}
+
+@media (max-width: 48rem) {
+  .app-shell {
+    grid-template-rows: 108px 56px minmax(0, 1fr);
+  }
+
+  .direction-control {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    width: 154px;
+    margin: 0;
+  }
+
+  .direction-control span {
+    min-height: 30px;
+    font-size: 0.66rem;
+  }
+
+  .wheel-stage {
+    position: relative;
+  }
+
+  .wheel-wrap {
+    --wheel-size: min(calc(100vw - 32px), calc(100dvh - 510px), 344px);
+  }
+}
+
+@media (max-width: 48rem) and (max-height: 44rem) {
+  .main-stage {
+    padding: 4px 8px;
+    grid-template-rows: 38px minmax(0, 1fr) 142px;
+    gap: 4px;
+  }
+
+  .path-rail button,
+  .path-rail li > span,
+  .path-current,
+  .path-selected {
+    min-height: 34px;
+  }
+
+  .wheel-wrap {
+    --wheel-size: min(calc(100vw - 116px), calc(100dvh - 384px), 210px);
+    min-width: 138px;
+    min-height: 138px;
+  }
+
+  .stage-heading {
+    padding: 1px 8px 2px;
+    margin-bottom: -4px;
+  }
+
+  .stage-heading p {
+    display: none;
+  }
+
+  .candidate-ticket {
+    max-height: 142px;
+    padding: 5px 8px;
+  }
+
+  .candidate-ticket header {
+    padding-bottom: 2px;
+  }
+
+  .candidate-ticket ol {
+    padding-block: 1px;
+  }
+
+  .candidate-ticket li {
+    padding-block: 1px;
+  }
+
+  .candidate-actions .ticket-action {
+    min-height: 30px;
+    padding-block: 2px;
+  }
+}
+
+@media (min-width: 48.001rem) and (max-height: 44rem) {
+  .candidate-ticket ol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 8px;
+  }
+
+  .candidate-ticket li {
+    padding-block: 2px;
+  }
+
+  .candidate-ticket li small {
+    display: none;
   }
 }

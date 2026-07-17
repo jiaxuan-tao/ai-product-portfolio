@@ -123,6 +123,17 @@
             <p>今日饭局 · <span id="stage-count">12</span> 选 1</p>
             <h2 id="wheel-heading">午餐转盘</h2>
           </div>
+          <fieldset id="direction-control" class="direction-control" hidden>
+            <legend class="visually-hidden">选择饮食方向</legend>
+            <label>
+              <input type="radio" name="direction" value="中餐" checked>
+              <span>中餐</span>
+            </label>
+            <label>
+              <input type="radio" name="direction" value="外国菜">
+              <span>外国菜</span>
+            </label>
+          </fieldset>
           <div class="wheel-wrap">
             <div class="chopstick-pointer" aria-hidden="true">
               <span></span>
@@ -174,16 +185,11 @@
         </section>
       </main>
 
-      <footer class="status-strip">
-        <p><span aria-hidden="true">●</span> 当前候选 <strong id="candidate-count">12</strong> 个</p>
-        <p><span aria-hidden="true">✓</span> 最近 3 次不重复</p>
-        <p id="filter-summary">午餐 · 口味不限 · 预算不限</p>
-      </footer>
     </div>
 
     <dialog id="result-ticket" class="result-ticket" aria-labelledby="result-name">
       <div class="ticket-topline">
-        <p>出餐时间 · <time id="result-time" datetime="">--:--</time></p>
+        <p>今日推荐</p>
         <button
           id="close-result"
           class="icon-button ink-button"
@@ -197,9 +203,13 @@
         </button>
       </div>
       <figure class="result-visual">
-        <canvas id="result-art" width="960" height="640">
-          浏览器不支持 Canvas，无法展示菜品插画。
-        </canvas>
+        <img
+          id="result-art"
+          src="assets/food-poster.jpg"
+          alt="今日推荐菜品"
+          width="960"
+          height="640"
+        >
         <figcaption id="result-category">广西风味 · 中餐</figcaption>
       </figure>
       <div class="result-copy">
@@ -212,7 +222,7 @@
         </ul>
       </div>
       <div id="cuisine-result-actions" class="result-actions" hidden>
-        <button id="accept-cuisine" class="button-secondary" type="button">就吃这个菜系</button>
+        <button id="restart-cuisine" class="button-secondary" type="button">重新选菜系</button>
         <button id="continue-cuisine" class="button-primary" type="button">继续选一道菜</button>
       </div>
       <div id="food-result-actions" class="result-actions">
@@ -258,6 +268,22 @@
 
       <div class="drawer-content">
         <section id="panel-preset" role="tabpanel" aria-labelledby="tab-preset">
+          <div class="cuisine-manager">
+            <div class="panel-heading">
+              <div>
+                <h3>菜系管理</h3>
+                <p>小众外国菜默认关闭，可根据常去的餐厅一键加入。</p>
+              </div>
+            </div>
+            <div id="optional-cuisines" class="cuisine-toggle-grid">
+              <label><input type="checkbox" value="泰国菜"><span>泰国菜</span></label>
+              <label><input type="checkbox" value="越南菜"><span>越南菜</span></label>
+              <label><input type="checkbox" value="东南亚其他"><span>东南亚其他</span></label>
+              <label><input type="checkbox" value="印度菜"><span>印度菜</span></label>
+              <label><input type="checkbox" value="墨西哥菜"><span>墨西哥菜</span></label>
+              <label><input type="checkbox" value="中东菜"><span>中东菜</span></label>
+            </div>
+          </div>
           <div class="panel-heading">
             <h3>预设菜品</h3>
             <span id="preset-count">100 道</span>
@@ -292,16 +318,11 @@
               <input name="food-name" type="text" required maxlength="20" autocomplete="off">
             </label>
             <label>
-              <span>大类</span>
+              <span>饮食方向</span>
               <select name="food-group" required>
                 <option value="">请选择</option>
                 <option>中餐</option>
-                <option>西餐</option>
-                <option>日料</option>
-                <option>韩餐</option>
-                <option>东南亚</option>
-                <option>快餐小吃</option>
-                <option>轻食甜品</option>
+                <option>外国菜</option>
               </select>
             </label>
             <label>

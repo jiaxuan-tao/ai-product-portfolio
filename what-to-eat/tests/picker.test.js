@@ -1,10 +1,15 @@
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 
 import {
   CHINESE_CUISINES,
+  DEFAULT_FOREIGN_CUISINES,
+  DIRECTIONS,
   FOODS,
-  TOP_LEVEL_GROUPS,
+  OPTIONAL_FOREIGN_CUISINES,
   getFoodById,
 } from "../foods.js";
 import {
@@ -15,11 +20,16 @@ import {
   sampleCandidates,
 } from "../picker.js";
 
-test("preset taxonomy has at least 90 uniquely identified concrete dishes", () => {
-  assert.ok(FOODS.length >= 90);
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+test("preset taxonomy has at least 100 uniquely identified concrete dishes with local images", () => {
+  assert.ok(FOODS.length >= 100);
   assert.equal(new Set(FOODS.map((food) => food.id)).size, FOODS.length);
   assert.equal(new Set(FOODS.map((food) => food.name)).size, FOODS.length);
   assert.ok(FOODS.every((food) => food.meals.length && food.flavors.length && food.spends.length));
+  assert.ok(FOODS.every((food) => DIRECTIONS.includes(food.origin)));
+  assert.ok(FOODS.every((food) => food.image === `assets/dishes/${food.id}.webp`));
+  assert.ok(FOODS.every((food) => ["default", "optional"].includes(food.availability)));
   assert.ok(Object.isFrozen(FOODS));
   assert.ok(FOODS.every((food) => (
     Object.isFrozen(food)
@@ -31,12 +41,22 @@ test("preset taxonomy has at least 90 uniquely identified concrete dishes", () =
   assert.notEqual(FOODS[0].spends, FOODS[1].spends);
   assert.equal(getFoodById("luosifen")?.name, "螺蛳粉");
   assert.equal(getFoodById("missing-food"), undefined);
+  assert.ok(FOODS.every((food) => existsSync(path.join(projectRoot, food.image))));
 });
 
-test("real preset foods cover every top-level group and Chinese sub-cuisine", () => {
-  assert.ok(TOP_LEVEL_GROUPS.every((group) => FOODS.some((food) => food.group === group)));
+test("real preset foods cover common Chinese and foreign cuisines", () => {
   assert.ok(CHINESE_CUISINES.every((cuisine) => (
-    FOODS.some((food) => food.group === "中餐" && food.cuisine === cuisine)
+    FOODS.some((food) => food.origin === "中餐" && food.cuisine === cuisine)
+  )));
+  assert.ok(DEFAULT_FOREIGN_CUISINES.every((cuisine) => (
+    FOODS.some((food) => food.origin === "外国菜" && food.cuisine === cuisine)
+  )));
+  assert.ok(OPTIONAL_FOREIGN_CUISINES.every((cuisine) => (
+    FOODS.some((food) => (
+      food.origin === "外国菜"
+      && food.cuisine === cuisine
+      && food.availability === "optional"
+    ))
   )));
 });
 
@@ -101,18 +121,10 @@ test("sampleCandidates returns unique items and clamps the requested size to 12"
   assert.equal(items.length, 20);
 });
 
-test("buildHierarchyOptions returns the seven root groups", () => {
-  assert.deepEqual(TOP_LEVEL_GROUPS, ["中餐", "西餐", "日料", "韩餐", "东南亚", "快餐小吃", "轻食甜品"]);
-  assert.deepEqual(
-    buildHierarchyOptions(FOODS, []).map((option) => option.name),
-    TOP_LEVEL_GROUPS,
-  );
-});
-
-test("buildHierarchyOptions returns the nine Chinese sub-cuisines", () => {
+test("buildHierarchyOptions returns common Chinese cuisines after choosing direction", () => {
   assert.deepEqual(
     CHINESE_CUISINES,
-    ["川湘菜", "粤菜", "江浙菜", "北方菜", "西北菜", "云贵菜", "广西风味", "火锅烧烤", "面食"],
+    ["川湘菜", "粤菜", "江浙菜", "东北菜", "西北菜", "云贵菜", "广西风味", "火锅烧烤", "粉面米线", "中式小吃", "中式甜品"],
   );
   assert.deepEqual(
     buildHierarchyOptions(FOODS, ["中餐"]).map((option) => option.name),
@@ -126,7 +138,7 @@ test("buildHierarchyOptions keeps custom Chinese cuisines reachable", () => {
     {
       id: "custom-noodles",
       name: "家传拌面",
-      group: "中餐",
+      origin: "中餐",
       cuisine: "我的自定义",
       meals: ["晚餐"],
       flavors: ["清淡点"],
@@ -141,38 +153,70 @@ test("buildHierarchyOptions returns matching dishes at a complete path", () => {
   const options = buildHierarchyOptions(FOODS, ["中餐", "广西风味"]);
 
   assert.ok(options.length > 0);
-  assert.ok(options.every((food) => food.group === "中餐" && food.cuisine === "广西风味"));
+  assert.ok(options.every((food) => food.origin === "中餐" && food.cuisine === "广西风味"));
 });
 
-test("hierarchy root always exposes every common group before filters apply", async () => {
+test("foreign cuisine wheel defaults to Japanese, Korean, and Western food", async () => {
   const picker = await import("../picker.js");
-  assert.equal(typeof picker.createHierarchyCandidates, "function");
-
-  const candidates = picker.createHierarchyCandidates({
-    foods: FOODS,
-    path: [],
-    filters: { meal: "早餐", flavor: "清淡点", spend: "简单吃" },
-    exclusions: {},
-    now: 1_000,
-  });
-
-  assert.deepEqual(candidates.map((candidate) => candidate.name), TOP_LEVEL_GROUPS);
-});
-
-test("hierarchy filters cuisines and dishes only after a root group is chosen", async () => {
-  const picker = await import("../picker.js");
-  assert.equal(typeof picker.createHierarchyCandidates, "function");
-
   const cuisines = picker.createHierarchyCandidates({
     foods: FOODS,
-    path: ["中餐"],
-    filters: { meal: "早餐", flavor: "清淡点", spend: "简单吃" },
+    path: ["外国菜"],
+    enabledOptionalCuisines: [],
+    filters: { meal: "午餐", flavor: "不限", spend: "不限" },
     exclusions: {},
     now: 1_000,
   });
+
+  assert.deepEqual(cuisines.map((candidate) => candidate.name), DEFAULT_FOREIGN_CUISINES);
+});
+
+test("cuisine wheel remains complete when current dish filters are narrow", async () => {
+  const picker = await import("../picker.js");
+  const cuisines = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: ["外国菜"],
+    enabledOptionalCuisines: ["印度菜"],
+    filters: { meal: "夜宵", flavor: "想吃甜", spend: "简单吃" },
+  });
+
+  assert.deepEqual(
+    cuisines.map((candidate) => candidate.name),
+    [...DEFAULT_FOREIGN_CUISINES, "印度菜"],
+  );
+});
+
+test("optional foreign cuisines only enter wheels after a one-click enable", async () => {
+  const picker = await import("../picker.js");
+  const disabled = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: ["外国菜"],
+    enabledOptionalCuisines: [],
+  });
+  const enabled = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: ["外国菜"],
+    enabledOptionalCuisines: ["泰国菜", "印度菜"],
+  });
+  const directPool = createCandidatePool({
+    foods: FOODS.filter((food) => ["印度菜", "日料"].includes(food.cuisine)),
+    enabledOptionalCuisines: [],
+    limit: 12,
+    rng: () => 0,
+  });
+
+  assert.ok(!disabled.some((candidate) => candidate.name === "泰国菜"));
+  assert.deepEqual(
+    enabled.map((candidate) => candidate.name),
+    [...DEFAULT_FOREIGN_CUISINES, "泰国菜", "印度菜"],
+  );
+  assert.ok(directPool.every((food) => food.cuisine === "日料"));
+});
+
+test("hierarchy filters dishes after a cuisine is chosen", async () => {
+  const picker = await import("../picker.js");
   const dishes = picker.createHierarchyCandidates({
     foods: FOODS,
-    path: ["中餐", "面食"],
+    path: ["中餐", "粉面米线"],
     filters: { meal: "早餐", flavor: "清淡点", spend: "简单吃" },
     exclusions: {},
     now: 1_000,
@@ -180,11 +224,10 @@ test("hierarchy filters cuisines and dishes only after a root group is chosen", 
     rng: () => 0,
   });
 
-  assert.deepEqual(cuisines.map((candidate) => candidate.name), ["面食"]);
   assert.ok(dishes.length >= 2);
   assert.ok(dishes.every((food) => (
-    food.group === "中餐"
-    && food.cuisine === "面食"
+    food.origin === "中餐"
+    && food.cuisine === "粉面米线"
     && food.meals.includes("早餐")
     && food.flavors.includes("清淡点")
     && food.spends.includes("简单吃")
@@ -240,6 +283,35 @@ test("createCandidatePool keeps eight candidates when at least eight foods are e
   }
 });
 
+test("dish wheel relaxes narrow filters inside the selected cuisine instead of dead-ending", async () => {
+  const picker = await import("../picker.js");
+  const dishes = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: ["中餐", "川湘菜"],
+    filters: { meal: "早餐", flavor: "想吃甜", spend: "简单吃" },
+    exclusions: {},
+    limit: 12,
+    rng: () => 0,
+  });
+
+  assert.ok(dishes.length >= 2);
+  assert.ok(dishes.every((food) => food.origin === "中餐" && food.cuisine === "川湘菜"));
+});
+
+test("dish wheel may repeat a recent result when a small cuisine would otherwise dead-end", async () => {
+  const picker = await import("../picker.js");
+  const dishes = picker.createHierarchyCandidates({
+    foods: FOODS,
+    path: ["中餐", "川湘菜"],
+    exclusions: { recentAccepted: ["mapo-tofu", "kung-pao-chicken"] },
+    limit: 12,
+    rng: () => 0,
+  });
+
+  assert.ok(dishes.length >= 2);
+  assert.ok(dishes.every((food) => food.origin === "中餐" && food.cuisine === "川湘菜"));
+});
+
 test("createCandidatePool returns every eligible food when fewer than eight remain", () => {
   const foods = Array.from({ length: 2 }, (_, index) => ({
     id: `eligible-${index}`,
@@ -255,8 +327,8 @@ test("createCandidatePool returns every eligible food when fewer than eight rema
 
 test("picker functions leave caller-provided inputs unchanged", () => {
   const foods = [
-    { id: "one", meals: ["晚餐"], flavors: ["清淡点"], spends: ["简单吃"], group: "中餐", cuisine: "川湘菜" },
-    { id: "two", meals: ["午餐"], flavors: ["想吃辣"], spends: ["正常吃"], group: "中餐", cuisine: "粤菜" },
+    { id: "one", meals: ["晚餐"], flavors: ["清淡点"], spends: ["简单吃"], origin: "中餐", cuisine: "川湘菜" },
+    { id: "two", meals: ["午餐"], flavors: ["想吃辣"], spends: ["正常吃"], origin: "中餐", cuisine: "粤菜" },
   ];
   const filters = { meal: "晚餐" };
   const exclusions = { recentAccepted: [], blockedUntil: { one: 999 } };

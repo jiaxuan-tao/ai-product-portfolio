@@ -25,7 +25,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: prompt-manager/package-lock.json
+          cache-dependency-path: |
+            prompt-manager/package-lock.json
+            what-to-eat/package-lock.json
       - name: Install Prompt Manager
         working-directory: prompt-manager
         run: npm ci
@@ -41,6 +43,14 @@ jobs:
       - name: Test What to Eat
         working-directory: what-to-eat
         run: npm test
+      - name: Install What to Eat browser tests
+        working-directory: what-to-eat
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Test What to Eat in Chromium
+        working-directory: what-to-eat
+        run: npm run test:browser
       - name: Build Prompt Manager
         working-directory: prompt-manager
         run: npm run build

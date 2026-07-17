@@ -99,6 +99,17 @@ test("saveState and loadState preserve the sound preference", () => {
   assert.equal(loadState(storage, NOW).soundEnabled, false);
 });
 
+test("optional cuisines are disabled by default and persist as unique known values", () => {
+  assert.deepEqual(DEFAULT_STATE.enabledOptionalCuisines, []);
+
+  const state = normalizeState({
+    ...DEFAULT_STATE,
+    enabledOptionalCuisines: ["泰国菜", "泰国菜", "印度菜", "不存在的菜系", 123],
+  }, NOW);
+
+  assert.deepEqual(state.enabledOptionalCuisines, ["泰国菜", "印度菜"]);
+});
+
 test("saveState returns false when storage rejects writes", () => {
   const storage = {
     setItem() {

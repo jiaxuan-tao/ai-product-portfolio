@@ -1,6 +1,14 @@
 const STORAGE_KEY = "what-to-eat.state.v1";
 const SCHEMA_VERSION = 1;
 const BLOCK_DURATION_MS = 86_400_000;
+const OPTIONAL_CUISINES = new Set([
+  "泰国菜",
+  "越南菜",
+  "东南亚其他",
+  "印度菜",
+  "墨西哥菜",
+  "中东菜",
+]);
 
 export const DEFAULT_STATE = {
   version: SCHEMA_VERSION,
@@ -13,6 +21,7 @@ export const DEFAULT_STATE = {
   favorites: [],
   blockedUntil: {},
   recentAccepted: [],
+  enabledOptionalCuisines: [],
   soundEnabled: true,
 };
 
@@ -24,6 +33,7 @@ function createDefaultState() {
     favorites: [],
     blockedUntil: {},
     recentAccepted: [],
+    enabledOptionalCuisines: [],
   };
 }
 
@@ -60,7 +70,7 @@ function normalizeCustomFoods(value) {
     if (!id || !name || seenIds.has(id)) continue;
 
     const normalized = { id, name };
-    for (const field of ["group", "cuisine", "visual"]) {
+    for (const field of ["group", "origin", "cuisine", "category", "visual", "image"]) {
       if (typeof food[field] === "string" && food[field].trim()) {
         normalized[field] = food[field].trim();
       }
@@ -108,6 +118,8 @@ export function normalizeState(value, now = Date.now()) {
     favorites: normalizeIds(value.favorites),
     blockedUntil: normalizeBlockedUntil(value.blockedUntil, now),
     recentAccepted: normalizeIds(value.recentAccepted, 3),
+    enabledOptionalCuisines: normalizeIds(value.enabledOptionalCuisines)
+      .filter((name) => OPTIONAL_CUISINES.has(name)),
     soundEnabled: typeof value.soundEnabled === "boolean"
       ? value.soundEnabled
       : DEFAULT_STATE.soundEnabled,

@@ -9,7 +9,6 @@ const htmlPath = path.join(projectRoot, "index.html");
 const cssPath = path.join(projectRoot, "styles.css");
 const appPath = path.join(projectRoot, "app.js");
 const audioPath = path.join(projectRoot, "audio.js");
-const artPath = path.join(projectRoot, "food-art.js");
 const selectMenuPath = path.join(projectRoot, "select-menu.js");
 const posterPath = path.join(projectRoot, "assets", "food-poster.jpg");
 const html = existsSync(htmlPath) ? readFileSync(htmlPath, "utf8") : "";
@@ -45,14 +44,17 @@ test("shell exposes the title, modes, filters, and stable Task 4 hooks", () => {
   }
 });
 
-test("wheel, path rail, candidate ticket, and status strip are semantically present", () => {
+test("wheel, direction selector, path rail, and candidate ticket are semantically present", () => {
   assert.match(html, /<nav[^>]*aria-label="选择路径"/);
+  assert.match(html, /id="direction-control"/);
+  assert.match(html, />\s*中餐\s*</);
+  assert.match(html, />\s*外国菜\s*</);
   assert.match(html, /<canvas[^>]*id="wheel"[^>]*>[\s\S]*浏览器不支持 Canvas[\s\S]*<\/canvas>/);
   assert.match(html, /<section[^>]*aria-labelledby="candidate-heading"/);
   assert.match(html, /id="candidate-list"/);
   assert.match(html, /换一批候选/);
-  assert.match(html, /<footer[^>]*class="[^"]*status-strip[^"]*"/);
-  assert.match(html, /最近 3 次不重复/);
+  assert.doesNotMatch(html, /status-strip/);
+  assert.doesNotMatch(html, /最近 3 次不重复/);
 });
 
 test("icon-only controls have accessible names and tooltips", () => {
@@ -65,11 +67,12 @@ test("icon-only controls have accessible names and tooltips", () => {
   }
 });
 
-test("result ticket includes local artwork and every decision action", () => {
+test("result ticket uses local images and exposes unambiguous step actions", () => {
   assert.match(html, /<dialog[^>]*id="result-ticket"/);
-  assert.match(html, /<canvas[^>]*id="result-art"/);
-  assert.ok(existsSync(artPath), "food-art.js should exist");
-  assert.match(html, /就吃这个菜系/);
+  assert.match(html, /<img[^>]*id="result-art"/);
+  assert.doesNotMatch(html, /出餐时间/);
+  assert.doesNotMatch(html, /就吃这个菜系/);
+  assert.match(html, /重新选菜系/);
   assert.match(html, /继续选一道菜/);
   assert.match(html, /暂时不要/);
   assert.match(html, /再转一次/);
@@ -90,6 +93,10 @@ test("food library dialog includes four tabs and a complete custom-food form", (
   assert.match(html, /name="food-flavor"/);
   assert.match(html, /name="food-spend"/);
   assert.match(html, /添加到菜库/);
+  assert.match(html, /id="optional-cuisines"/);
+  assert.match(html, /菜系管理/);
+  assert.match(html, /泰国菜/);
+  assert.match(html, /印度菜/);
   assert.match(html, /role="status"/);
 });
 
@@ -97,6 +104,10 @@ test("HTML uses only local runtime images, styles, scripts, and fonts", () => {
   assert.doesNotMatch(html, /<(?:img|script|link)[^>]+(?:src|href)="https?:\/\//i);
   assert.doesNotMatch(css, /url\(\s*["']?https?:\/\//i);
   assert.doesNotMatch(css, /@import/i);
+});
+
+test("application never requests or describes location access", () => {
+  assert.doesNotMatch(`${html}\n${app}`, /geolocation|getCurrentPosition|定位权限|读取位置/i);
 });
 
 test("playful canteen CSS defines its grid, hard shadows, layout, and responsive safeguards", () => {
@@ -116,6 +127,7 @@ test("desktop application is constrained to one viewport without body scrolling"
   assert.match(css, /\.main-stage\s*\{[^}]*min-height:\s*0/s);
   assert.match(css, /\.wheel-wrap\s*\{[^}]*--wheel-size:/s);
   assert.match(css, /aspect-ratio:\s*1(?:\s*\/\s*1)?/);
+  assert.match(css, /\.app-shell\s*\{[^}]*grid-template-rows:\s*[^;]*minmax\(0,\s*1fr\)[^;]*;/s);
 });
 
 test("filter controls use themed listboxes instead of opening native select menus", () => {
@@ -136,9 +148,11 @@ test("candidate ticket uses clear date copy, a meaningful stamp, and non-overlap
   assert.match(css, /\.candidate-actions\s*\{[^}]*display:\s*grid/s);
 });
 
-test("path current state is non-interactive while completed steps are explicit back buttons", () => {
-  assert.match(app, /className\s*=\s*["']path-current["']/);
+test("path states distinguish the selected direction, current step, and real back actions", () => {
+  assert.match(app, /["']path-current["']/);
+  assert.match(app, /["']path-selected["']/);
   assert.match(app, /className\s*=\s*["']path-back["']/);
+  assert.match(app, /appendPathStep\(1,\s*hierarchyPath\[0\],\s*["']selected["']/);
   assert.match(app, /aria-current/);
 });
 
@@ -152,7 +166,7 @@ test("topbar tools expose visible sound and library state", () => {
   assert.match(css, /\.tool-button\[aria-expanded="true"\]/);
 });
 
-test("application module wires picker, storage, audio, animation, and secure randomness", () => {
+test("application module wires picker, storage, audio, animation, local images, and secure randomness", () => {
   assert.ok(existsSync(appPath), "app.js should exist");
   assert.ok(existsSync(audioPath), "audio.js should exist");
   assert.match(html, /<script\s+type="module"\s+src="app\.js"><\/script>/);
@@ -160,15 +174,19 @@ test("application module wires picker, storage, audio, animation, and secure ran
   assert.match(app, /from\s+["']\.\/picker\.js["']/);
   assert.match(app, /from\s+["']\.\/storage\.js["']/);
   assert.match(app, /from\s+["']\.\/audio\.js["']/);
-  assert.match(app, /from\s+["']\.\/food-art\.js["']/);
+  assert.doesNotMatch(app, /from\s+["']\.\/food-art\.js["']/);
+  assert.match(app, /assets\/food-poster\.jpg/);
   assert.match(app, /requestAnimationFrame/);
   assert.match(app, /crypto\.getRandomValues/);
+  assert.match(app, /spinCandidates\s*=\s*\[\.\.\.candidatePool\]/);
+  assert.match(app, /setSpinControlsDisabled/);
+  assert.match(app, /candidatePool\.length\s*===\s*0/);
   assert.match(app, /prefers-reduced-motion/);
 });
 
 test("result workflow handles every decision and moves focus to the result", () => {
   for (const id of [
-    "accept-cuisine",
+    "restart-cuisine",
     "continue-cuisine",
     "block-result",
     "reroll-result",
@@ -186,6 +204,7 @@ test("library workflow persists custom foods, favorites, blocks, and saved combi
   assert.match(app, /favorites/);
   assert.match(app, /blockedUntil/);
   assert.match(app, /savedCombinations/);
+  assert.match(app, /enabledOptionalCuisines/);
   assert.match(app, /normalizeSavedCombination/);
   assert.match(app, /\.map\(normalizeSavedCombination\)/);
   assert.match(app, /saveState\(/);
@@ -200,16 +219,18 @@ test("library tabs implement roving tabindex and synchronized panels", () => {
   assert.match(app, /aria-controls/);
 });
 
-test("runtime normalizes legacy filter options and guards undersized candidate pools", () => {
+test("runtime normalizes legacy filters, blocks empty pools, and permits one-item pools", () => {
   assert.match(app, /来点硬菜/);
   assert.match(app, /犒劳自己/);
   assert.match(app, /createHierarchyCandidates/);
-  assert.match(app, /candidatePool\.length\s*<\s*2/);
+  assert.match(app, /candidatePool\.length\s*===\s*0/);
+  assert.match(app, /只有 1 个候选，点击开转直接确认/);
   assert.match(app, /放宽|减少筛选|候选不足/);
 });
 
 test("custom foods receive a stable cuisine and return to the wheel after loading", () => {
   assert.match(app, /cuisine:\s*["']我的自定义["']/);
+  assert.match(app, /origin:/);
   assert.match(app, /customFoods/);
   assert.match(app, /FOODS[\s\S]*customFoods|customFoods[\s\S]*FOODS/);
 });
