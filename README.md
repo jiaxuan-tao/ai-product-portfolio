@@ -22,12 +22,15 @@
   macOS 原生风格的 Codex 额度悬浮窗，记录从开源基础能力、界面重构到真实桌面环境修复的 Vibe Coding 实践。
   [下载 macOS 版](https://github.com/jiaxuan-tao/ai-product-portfolio/releases/download/quota-float-native-v0.1.2/quota-float-native-macos-universal-unsigned.zip)
 
+- [AI 热点采集 Skill](ai-topic-collector-skill/README.md)
+  面向 Codex 的 AI 热点采集流程，支持手动触发，也可以结合定时任务自动整理近 24 小时的 AI 动态。
+
 ---
 
 ## Repository Structure｜仓库结构 📂
 
 - 根目录项目文件夹
-  每个可独立体验的 AI 产品使用一个同级文件夹，例如 `vibe-coding-prompt-library/`、`prompt-manager/` 和 `quota-float-native/`。
+  每个可独立体验的 AI 产品或工具使用一个同级文件夹，例如 `vibe-coding-prompt-library/`、`prompt-manager/`、`quota-float-native/` 和 `ai-topic-collector-skill/`。
 
 - `projects/`
   用于维护项目目录说明和后续归档信息。
