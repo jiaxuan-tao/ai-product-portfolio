@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? "/ai-product-portfolio/prompt-manager/" : "/",
+  base: process.env.GITHUB_ACTIONS ? "/vibe-coding-lab/prompt-manager/" : "/",
   optimizeDeps: {
     include: ["react", "react-dom/client"],
   },

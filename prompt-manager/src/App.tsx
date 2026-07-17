@@ -312,7 +312,7 @@ export function App() {
           <button onClick={() => void exportData()}><DownloadSimple size={19} />导出</button>
           <button onClick={() => importInputRef.current?.click()}><UploadSimple size={19} />导入</button>
           <input ref={importInputRef} type="file" accept="application/json" hidden onChange={(event) => void readImport(event)} />
-          <a href="https://github.com/jiaxuan-tao/ai-product-portfolio/issues" target="_blank" rel="noreferrer">
+          <a href="https://github.com/jiaxuan-tao/vibe-coding-lab/issues" target="_blank" rel="noreferrer">
             <ChatCircleDots size={19} />意见反馈
           </a>
           <span className="author"><User size={18} />Jiaxuan Tao</span>

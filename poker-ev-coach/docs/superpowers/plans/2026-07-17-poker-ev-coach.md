@@ -2,7 +2,7 @@
 
 > **Migration note (2026-07-17):** This plan records the original standalone
 > delivery. The maintained project now lives at
-> `ai-product-portfolio/poker-ev-coach/`; do not rerun the standalone repository
+> `vibe-coding-lab/poker-ev-coach/`; do not rerun the standalone repository
 > creation or publication steps.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

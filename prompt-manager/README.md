@@ -2,7 +2,7 @@
 
 一款纯本地、离线可用的提示词资产管理工具。用「场景 → 提示词 → 版本」三层结构整理日常 Prompt，并通过 IndexedDB 将全部内容保存在当前浏览器中。
 
-在线体验：[https://jiaxuan-tao.github.io/ai-product-portfolio/prompt-manager/](https://jiaxuan-tao.github.io/ai-product-portfolio/prompt-manager/)
+在线体验：[https://jiaxuan-tao.github.io/vibe-coding-lab/prompt-manager/](https://jiaxuan-tao.github.io/vibe-coding-lab/prompt-manager/)
 
 ![Prompt Manager 场景与提示词列表](docs/screenshots/home.png)
 

@@ -1,8 +1,8 @@
-# AI Product Portfolio 🚀
+# Vibe Coding Lab｜轻量项目实验室 🚀
 
-这是一个用于整理个人 AI 产品实践项目的作品集仓库。
+这是一个用于整理个人 Vibe Coding 轻量项目的实验仓库。
 
-本仓库主要用于记录后续通过 Vibe Coding 方式完成或推进的 AI 产品项目，包括产品定位、用户场景、核心功能、需求文档、交互流程、Prompt 设计、开发记录和迭代思考。
+这里集中记录通过 Vibe Coding 完成或推进的 Web 应用、桌面工具、提示词资料库和 Codex Skill，包括产品定位、用户场景、核心功能、交互流程、Prompt 设计、开发记录和迭代思考。
 
 当前阶段先搭建基础结构，后续会随着具体项目推进逐步补充内容。
 
@@ -12,19 +12,19 @@
 
 - [Prompt Library 提示词资料库](vibe-coding-prompt-library/README.md)
   面向 Vibe Coding 工作流的本地化提示词模板库，用于整理和复用 PRD、Codex 指令、UI 修改、Debug 和项目文档提示词。
-  [在线体验](https://jiaxuan-tao.github.io/ai-product-portfolio/vibe-coding-prompt-library/)
+  [在线体验](https://jiaxuan-tao.github.io/vibe-coding-lab/vibe-coding-prompt-library/)
 
 - [Prompt Manager 提示词管理器](prompt-manager/README.md)
   纯本地、离线可用的提示词资产管理工具，支持场景、提示词、版本、标签和 JSON 数据流转。
-  [在线体验](https://jiaxuan-tao.github.io/ai-product-portfolio/prompt-manager/)
+  [在线体验](https://jiaxuan-tao.github.io/vibe-coding-lab/prompt-manager/)
 
 - [Poker EV Coach 德扑决策助手](poker-ev-coach/README.md)
   面向德州扑克单手牌复盘的轻量 Web 工具，通过随机模拟比较 Equity、Pot Odds 与 Call EV，并解释行动建议。
-  [在线体验](https://jiaxuan-tao.github.io/ai-product-portfolio/poker-ev-coach/)
+  [在线体验](https://jiaxuan-tao.github.io/vibe-coding-lab/poker-ev-coach/)
 
 - [Quota Float Native 额度悬浮窗](quota-float-native/README.md)
   macOS 原生风格的 Codex 额度悬浮窗，记录从开源基础能力、界面重构到真实桌面环境修复的 Vibe Coding 实践。
-  [下载 macOS 版](https://github.com/jiaxuan-tao/ai-product-portfolio/releases/download/quota-float-native-v0.1.2/quota-float-native-macos-universal-unsigned.zip)
+  [下载 macOS 版](https://github.com/jiaxuan-tao/vibe-coding-lab/releases/download/quota-float-native-v0.1.2/quota-float-native-macos-universal-unsigned.zip)
 
 - [AI 热点采集 Skill](ai-topic-collector-skill/README.md)
   面向 Codex 的 AI 热点采集流程，支持手动触发，也可以结合定时任务自动整理近 24 小时的 AI 动态。
@@ -60,5 +60,5 @@
 
 ## Note｜说明 📝
 
-本仓库用于记录个人 AI 产品实践过程。
+本仓库用于记录个人 Vibe Coding 与产品实践过程。
 内容会持续更新，重点不只是展示最终结果，也包括产品想法、需求拆解、功能设计和迭代过程。

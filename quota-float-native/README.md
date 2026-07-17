@@ -34,11 +34,11 @@
 
 ## 下载
 
-从作品集仓库的 [Quota Float Native v0.1.2 Release](https://github.com/jiaxuan-tao/ai-product-portfolio/releases/tag/quota-float-native-v0.1.2)
+从项目实验室仓库的 [Quota Float Native v0.1.2 Release](https://github.com/jiaxuan-tao/vibe-coding-lab/releases/tag/quota-float-native-v0.1.2)
 下载未签名构建：
 
-- [macOS Universal](https://github.com/jiaxuan-tao/ai-product-portfolio/releases/download/quota-float-native-v0.1.2/quota-float-native-macos-universal-unsigned.zip)
-- [Windows](https://github.com/jiaxuan-tao/ai-product-portfolio/releases/download/quota-float-native-v0.1.2/quota-float-native-windows-unsigned.zip)
+- [macOS Universal](https://github.com/jiaxuan-tao/vibe-coding-lab/releases/download/quota-float-native-v0.1.2/quota-float-native-macos-universal-unsigned.zip)
+- [Windows](https://github.com/jiaxuan-tao/vibe-coding-lab/releases/download/quota-float-native-v0.1.2/quota-float-native-windows-unsigned.zip)
 
 未签名构建可能触发 macOS Gatekeeper 或 Windows SmartScreen。面向普通用户的
 公开分发应使用已签名并公证的构建。

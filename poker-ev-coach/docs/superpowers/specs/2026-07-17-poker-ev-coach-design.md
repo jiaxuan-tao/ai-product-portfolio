@@ -2,7 +2,7 @@
 
 > **Migration note (2026-07-17):** The project was initially delivered as a
 > standalone repository and was later moved to
-> `ai-product-portfolio/poker-ev-coach/`. Standalone repository publication
+> `vibe-coding-lab/poker-ev-coach/`. Standalone repository publication
 > details below are historical and should not be repeated.
 
 ## Goal

@@ -27,7 +27,7 @@ rustup target add aarch64-apple-darwin x86_64-apple-darwin
 
 ## 代码所在仓库
 
-项目位于 `jiaxuan-tao/ai-product-portfolio` 的 `quota-float-native/` 目录，不单独创建仓库。提交项目变更时只暂存该目录、作品集索引和对应工作流。
+项目位于 `jiaxuan-tao/vibe-coding-lab` 的 `quota-float-native/` 目录，不单独创建仓库。提交项目变更时只暂存该目录、项目索引和对应工作流。
 
 ```bash
 git add .

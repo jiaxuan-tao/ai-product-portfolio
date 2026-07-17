@@ -13,14 +13,14 @@ macOS 包使用 Universal 构建，同时支持 Apple Silicon 和 Intel Mac。
 
 ## 发布一个 GitHub 下载版本
 
-在 `ai-product-portfolio` 仓库推送 `quota-float-native-v*` tag 会触发根目录的 `.github/workflows/quota-float-native-release.yml`，构建 Windows unsigned 包和 macOS Universal unsigned 包，并发布到 GitHub Release。
+在 `vibe-coding-lab` 仓库推送 `quota-float-native-v*` tag 会触发根目录的 `.github/workflows/quota-float-native-release.yml`，构建 Windows unsigned 包和 macOS Universal unsigned 包，并发布到 GitHub Release。
 
 ```bash
 git tag quota-float-native-v0.1.2
 git push origin quota-float-native-v0.1.2
 ```
 
-工作流完成后，到 `ai-product-portfolio` 的 GitHub Releases 检查发布说明和附件。
+工作流完成后，到 `vibe-coding-lab` 的 GitHub Releases 检查发布说明和附件。
 
 ## CI 与构建
 

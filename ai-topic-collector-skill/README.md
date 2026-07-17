@@ -16,7 +16,7 @@
 
 ```bash
 mkdir -p ~/.codex/skills/topic-collector
-curl -sL https://raw.githubusercontent.com/jiaxuan-tao/ai-product-portfolio/main/ai-topic-collector-skill/SKILL.md \
+curl -sL https://raw.githubusercontent.com/jiaxuan-tao/vibe-coding-lab/main/ai-topic-collector-skill/SKILL.md \
   > ~/.codex/skills/topic-collector/SKILL.md
 ```
 
