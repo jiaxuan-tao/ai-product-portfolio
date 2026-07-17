@@ -1,4 +1,4 @@
-# Quota Float Native
+# Quota Float Native 额度悬浮窗
 
 一款采用 macOS 原生视觉语言的 Codex 额度悬浮窗。它读取本机 Codex Desktop
 已有登录态，以只读方式查询真实额度，并在轻量、常驻置顶的小组件中展示结果。

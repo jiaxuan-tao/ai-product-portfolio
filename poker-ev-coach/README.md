@@ -1,4 +1,4 @@
-# Poker EV Coach ♠️
+# Poker EV Coach 德扑决策助手 ♠️
 
 Poker EV Coach 是一个用于**德州扑克单手牌复盘**的轻量 Web 工具。
 
