@@ -680,8 +680,13 @@ dialog::backdrop {
 .result-visual {
   position: relative;
   margin: 16px 0;
+  overflow: hidden;
   border: var(--border);
-  background: var(--rice);
+  background-color: var(--rice);
+  background-image:
+    linear-gradient(rgb(14 73 61 / 10%) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(14 73 61 / 10%) 1px, transparent 1px);
+  background-size: 18px 18px;
 }
 
 .result-visual img {
@@ -689,7 +694,13 @@ dialog::backdrop {
   width: 100%;
   height: auto;
   aspect-ratio: 3 / 2;
-  object-fit: cover;
+  object-fit: contain;
+  opacity: 1;
+  transition: opacity 140ms ease-out;
+}
+
+.result-visual img.is-loading {
+  opacity: 0;
 }
 
 .result-visual figcaption {
@@ -1968,14 +1979,6 @@ body {
 .chopstick-pointer span:last-child {
   right: 9px;
   rotate: 7deg;
-}
-
-.result-visual img {
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 3 / 2;
-  object-fit: cover;
 }
 
 .cuisine-manager {

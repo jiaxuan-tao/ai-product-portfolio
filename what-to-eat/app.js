@@ -80,6 +80,7 @@ let currentRotation = 0;
 let isSpinning = false;
 let resultInvoker = elements.spin;
 let libraryInvoker = elements.openLibrary;
+let resultArtworkRequest = 0;
 
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 const audio = createAudioController({ enabled: coreState.soundEnabled });
@@ -565,16 +566,49 @@ function resultTags(item) {
   ];
 }
 
+function setResultArtwork(item) {
+  const requestId = ++resultArtworkRequest;
+  const fallbackSource = "assets/food-poster.jpg";
+  const source = item.image || fallbackSource;
+  const isCategory = item.type === "cuisine";
+
+  elements.resultArt.classList.add("is-loading");
+  elements.resultArt.setAttribute("aria-busy", "true");
+  elements.resultArt.alt = isCategory
+    ? `${item.name}代表菜拼盘`
+    : `${item.name}菜品图`;
+
+  function revealArtwork() {
+    if (requestId !== resultArtworkRequest) return;
+    elements.resultArt.classList.remove("is-loading");
+    elements.resultArt.removeAttribute("aria-busy");
+    elements.resultArt.onload = null;
+    elements.resultArt.onerror = null;
+  }
+
+  function loadArtwork(nextSource, canFallback) {
+    elements.resultArt.onload = revealArtwork;
+    elements.resultArt.onerror = () => {
+      if (requestId !== resultArtworkRequest) return;
+      if (canFallback) {
+        loadArtwork(fallbackSource, false);
+        return;
+      }
+      revealArtwork();
+    };
+    elements.resultArt.src = nextSource;
+  }
+
+  loadArtwork(source, source !== fallbackSource);
+}
+
 function showResult(item) {
   const isCategory = item.type === "cuisine";
   elements.resultName.textContent = item.name;
   elements.resultCategory.textContent = isCategory
     ? `${item.name} · ${item.origin}`
     : `${item.cuisine} · ${item.origin}`;
-  elements.resultArt.src = item.image || "assets/food-poster.jpg";
-  elements.resultArt.alt = isCategory
-    ? `${item.name}代表菜拼盘`
-    : `${item.name}菜品图`;
+  setResultArtwork(item);
   elements.resultTags.replaceChildren(...resultTags(item).map((tag) => {
     const listItem = document.createElement("li");
     listItem.textContent = tag;
@@ -1014,11 +1048,6 @@ function initialize() {
   document.querySelector(`input[name="mode"][value="${mode}"]`).checked = true;
   document.querySelector(`input[name="direction"][value="${uiState.direction}"]`).checked = true;
   elements.directionControl.hidden = mode !== "cuisine";
-  elements.resultArt.addEventListener("error", () => {
-    if (!elements.resultArt.src.endsWith("/assets/food-poster.jpg")) {
-      elements.resultArt.src = "assets/food-poster.jpg";
-    }
-  });
   setSoundEnabled(coreState.soundEnabled);
   refreshCandidatePool();
 }

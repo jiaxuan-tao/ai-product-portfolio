@@ -81,6 +81,46 @@ test("spin locks mutable controls and resolves from its candidate snapshot", asy
   await expect(page.locator('input[name="mode"]').first()).toBeEnabled();
 });
 
+test("result artwork keeps the complete square composition visible", async ({ page }) => {
+  await openFresh(page);
+  await page.locator("#spin-button").click();
+  await expect(page.locator("#result-ticket")).toHaveAttribute("open", "");
+  await expect(page.locator("#result-art")).toHaveJSProperty("complete", true);
+  expect(await page.locator("#result-art").evaluate((image) => getComputedStyle(image).objectFit)).toBe("contain");
+});
+
+test("result artwork hides the previous bitmap while the next image loads", async ({ page }) => {
+  let delayDishImages = false;
+  await page.addInitScript(() => {
+    let securePick = 0;
+    Math.random = () => 0;
+    crypto.getRandomValues = (values) => {
+      values.fill(securePick);
+      securePick += 1;
+      return values;
+    };
+  });
+  await page.route("**/assets/dishes/*.webp", async (route) => {
+    if (delayDishImages) {
+      await new Promise((resolve) => setTimeout(resolve, 700));
+    }
+    await route.continue();
+  });
+  await openFresh(page);
+
+  await page.locator("#spin-button").click();
+  await expect(page.locator("#result-ticket")).toHaveAttribute("open", "");
+  await expect(page.locator("#result-art")).toHaveJSProperty("complete", true);
+
+  delayDishImages = true;
+  await page.locator("#reroll-result").click();
+  await expect(page.locator("#result-ticket")).toHaveAttribute("open", "");
+  await expect(page.locator("#result-art")).toHaveClass(/is-loading/);
+  expect(await page.locator("#result-art").evaluate((image) => getComputedStyle(image).opacity)).toBe("0");
+  await expect(page.locator("#result-art")).not.toHaveClass(/is-loading/);
+  expect(await page.locator("#result-art").evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
+});
+
 test("cuisine flow advances from direction to a concrete dish with local images", async ({ page }) => {
   await openFresh(page);
   await page.locator('input[name="mode"][value="cuisine"]').check();
