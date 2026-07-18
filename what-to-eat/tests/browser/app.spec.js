@@ -86,7 +86,17 @@ test("result artwork keeps the complete square composition visible", async ({ pa
   await page.locator("#spin-button").click();
   await expect(page.locator("#result-ticket")).toHaveAttribute("open", "");
   await expect(page.locator("#result-art")).toHaveJSProperty("complete", true);
-  expect(await page.locator("#result-art").evaluate((image) => getComputedStyle(image).objectFit)).toBe("contain");
+  const artwork = await page.locator("#result-art").evaluate((image) => {
+    const rect = image.getBoundingClientRect();
+    return {
+      naturalRatio: image.naturalWidth / image.naturalHeight,
+      renderedRatio: rect.width / rect.height,
+      objectFit: getComputedStyle(image).objectFit,
+    };
+  });
+  expect(artwork.naturalRatio).toBeCloseTo(1, 2);
+  expect(artwork.renderedRatio).toBeCloseTo(1, 2);
+  expect(artwork.objectFit).toBe("cover");
 });
 
 test("result artwork hides the previous bitmap while the next image loads", async ({ page }) => {
@@ -120,6 +130,79 @@ test("result artwork hides the previous bitmap while the next image loads", asyn
   await expect(page.locator("#result-art")).not.toHaveClass(/is-loading/);
   expect(await page.locator("#result-art").evaluate((image) => image.complete && image.naturalWidth > 0)).toBe(true);
 });
+
+for (const [name, width, height] of [
+  ["laptop", 1366, 768],
+  ["mobile", 390, 844],
+  ["small phone", 320, 568],
+]) {
+  test(`${name} result ticket adapts around the square artwork`, async ({ page }) => {
+    await page.setViewportSize({ width, height });
+    await openFresh(page);
+    await page.locator("#spin-button").click();
+    await expect(page.locator("#result-ticket")).toHaveAttribute("open", "");
+    await expect(page.locator("#result-art")).not.toHaveClass(/is-loading/);
+
+    const metrics = await page.evaluate(() => {
+      const dialog = document.querySelector("#result-ticket");
+      const figure = document.querySelector(".result-visual");
+      const image = document.querySelector("#result-art");
+      const title = document.querySelector("#result-name");
+      const close = document.querySelector("#close-result");
+      const actions = [...document.querySelectorAll("#food-result-actions button")];
+      const dialogRect = dialog.getBoundingClientRect();
+      const figureRect = figure.getBoundingClientRect();
+      const imageRect = image.getBoundingClientRect();
+      const titleRect = title.getBoundingClientRect();
+      const closeRect = close.getBoundingClientRect();
+      const actionRects = actions.map((button) => button.getBoundingClientRect());
+      const isInside = (rect) => (
+        rect.left >= dialogRect.left - 1
+        && rect.right <= dialogRect.right + 1
+        && rect.top >= dialogRect.top - 1
+        && rect.bottom <= dialogRect.bottom + 1
+      );
+      const overlaps = (first, second) => !(
+        first.right <= second.left
+        || second.right <= first.left
+        || first.bottom <= second.top
+        || second.bottom <= first.top
+      );
+
+      return {
+        figureRatio: figureRect.width / figureRect.height,
+        imageRatio: imageRect.width / imageRect.height,
+        imageFillsFigure: (
+          Math.abs(imageRect.width - (figureRect.width - 4)) <= 1
+          && Math.abs(imageRect.height - (figureRect.height - 4)) <= 1
+        ),
+        dialogFitsViewport: (
+          dialogRect.left >= 0
+          && dialogRect.right <= window.innerWidth
+          && dialogRect.top >= 0
+          && dialogRect.bottom <= window.innerHeight
+        ),
+        dialogHasNoScroll: dialog.scrollHeight <= dialog.clientHeight + 1,
+        controlsInside: [
+          titleRect,
+          closeRect,
+          ...actionRects,
+        ].every(isInside),
+        actionsOverlap: actionRects.some((rect, index) => (
+          actionRects.slice(index + 1).some((other) => overlaps(rect, other))
+        )),
+      };
+    });
+
+    expect(metrics.figureRatio).toBeCloseTo(1, 2);
+    expect(metrics.imageRatio).toBeCloseTo(1, 2);
+    expect(metrics.imageFillsFigure).toBe(true);
+    expect(metrics.dialogFitsViewport).toBe(true);
+    expect(metrics.dialogHasNoScroll).toBe(true);
+    expect(metrics.controlsInside).toBe(true);
+    expect(metrics.actionsOverlap).toBe(false);
+  });
+}
 
 test("cuisine flow advances from direction to a concrete dish with local images", async ({ page }) => {
   await openFresh(page);

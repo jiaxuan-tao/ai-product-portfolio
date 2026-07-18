@@ -649,11 +649,11 @@ dialog::backdrop {
 }
 
 .result-ticket {
-  width: min(92vw, 560px);
+  width: min(88vw, 500px, calc(92dvh - 250px));
   max-height: 92vh;
   max-height: 92dvh;
-  padding: 18px;
-  overflow: auto;
+  padding: clamp(10px, 1.8dvh, 16px);
+  overflow: hidden;
 }
 
 .ticket-topline,
@@ -665,7 +665,7 @@ dialog::backdrop {
 }
 
 .ticket-topline {
-  padding-bottom: 12px;
+  padding-bottom: clamp(8px, 1.4dvh, 12px);
   border-bottom: 2px dashed var(--ink);
 }
 
@@ -677,9 +677,21 @@ dialog::backdrop {
   font-size: 0.72rem;
 }
 
+.result-ticket .icon-button {
+  width: clamp(38px, 5.5dvh, 44px);
+  min-width: clamp(38px, 5.5dvh, 44px);
+  min-height: clamp(38px, 5.5dvh, 44px);
+}
+
+.result-ticket .icon-button svg {
+  width: clamp(1rem, 2.4dvh, 1.25rem);
+  height: clamp(1rem, 2.4dvh, 1.25rem);
+}
+
 .result-visual {
   position: relative;
-  margin: 16px 0;
+  aspect-ratio: 1;
+  margin: clamp(8px, 1.5dvh, 14px) 0;
   overflow: hidden;
   border: var(--border);
   background-color: var(--rice);
@@ -692,9 +704,9 @@ dialog::backdrop {
 .result-visual img {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 3 / 2;
-  object-fit: contain;
+  height: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
   opacity: 1;
   transition: opacity 140ms ease-out;
 }
@@ -705,13 +717,16 @@ dialog::backdrop {
 
 .result-visual figcaption {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
-  padding: 4px 8px;
+  right: clamp(5px, 1dvh, 8px);
+  bottom: clamp(5px, 1dvh, 8px);
+  max-width: calc(100% - 12px);
+  padding: clamp(3px, 0.7dvh, 4px) clamp(6px, 1.2dvh, 8px);
   color: var(--rice);
   border: 2px solid var(--rice);
   background: var(--ink);
+  font-size: clamp(0.68rem, 1.7dvh, 0.88rem);
   font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .result-copy {
@@ -724,38 +739,60 @@ dialog::backdrop {
 }
 
 .result-copy > p {
+  margin-bottom: clamp(1px, 0.4dvh, 3px);
   color: var(--vermilion);
   font-family: var(--font-display);
-  font-size: 0.72rem;
+  font-size: clamp(0.62rem, 1.5dvh, 0.72rem);
 }
 
 .result-copy h2 {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 8vw, 3.4rem);
+  font-size: clamp(1.75rem, 5.2dvh, 2.7rem);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.result-copy h2:focus {
+  outline: 0;
 }
 
 .result-copy ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
+  gap: clamp(5px, 1dvh, 8px);
   padding: 0;
-  margin: 10px 0 18px;
+  margin: clamp(6px, 1.1dvh, 10px) 0 clamp(8px, 1.5dvh, 14px);
   list-style: none;
 }
 
 .result-copy li {
-  padding: 4px 9px;
+  padding: clamp(2px, 0.6dvh, 4px) clamp(6px, 1.1dvh, 9px);
   border: 1px solid var(--ink);
   background: var(--rice);
-  font-size: 0.8rem;
+  font-size: clamp(0.68rem, 1.6dvh, 0.8rem);
   font-weight: 800;
 }
 
 .result-actions {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
+  display: grid;
+  gap: clamp(6px, 1.2dvh, 10px);
+}
+
+#food-result-actions {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+#cuisine-result-actions {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.result-actions button {
+  min-height: clamp(38px, 5.5dvh, 44px);
+  padding: 5px clamp(5px, 1.2dvh, 10px);
+  font-size: clamp(0.7rem, 1.8dvh, 0.88rem);
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
 .result-actions[hidden] {
@@ -1529,19 +1566,11 @@ body {
   font-size: 0.72rem;
 }
 
-.result-ticket {
-  width: min(92vw, 620px);
-}
-
 .result-visual canvas {
   display: block;
   width: 100%;
   height: auto;
   aspect-ratio: 3 / 2;
-}
-
-.result-copy h2 {
-  font-size: clamp(2rem, 7vw, 3.2rem);
 }
 
 @media (max-width: 68rem) {
@@ -1798,26 +1827,19 @@ body {
   }
 
   .result-ticket {
-    width: calc(100vw - 20px);
     max-height: 94dvh;
-    padding: 12px;
   }
 
   .result-visual {
-    margin: 10px 0;
+    margin-block: clamp(7px, 1.4dvh, 10px);
   }
 
   .result-copy ul {
-    margin-bottom: 10px;
-  }
-
-  .result-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-bottom: clamp(7px, 1.4dvh, 10px);
   }
 
   .result-actions button {
-    padding-inline: 5px;
-    font-size: 0.72rem;
+    padding-inline: 4px;
   }
 
   .library-drawer {
